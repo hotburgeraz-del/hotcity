@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hell Hot 100 Simulator</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        
+        body { 
+            background-color: #05020a; 
+            background-image: radial-gradient(circle, #2a0202 0%, #05020a 100%); 
+            color: #fff; 
+            height: 100vh; 
+            height: 100dvh;
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            align-items: center; 
+            overflow: hidden; 
+            padding: 5px 0; 
+        }
+
+        .top-bar { 
+            width: 100%; 
+            max-width: 900px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 0 15px; 
+        }
+
+        .balance-box { font-size: 14px; color: #ddd; display: flex; align-items: center; gap: 8px; }
+        .balance-box span { font-weight: bold; color: #fff; }
+        
+        .wallet-btn { 
+            background: #ffcc00; 
+            border: none; 
+            color: #000; 
+            font-weight: bold; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 11px; 
+            box-shadow: 0 0 8px rgba(255,204,0,0.6); 
+        }
+        .wallet-btn:active { transform: scale(0.9); }
+        
+        .logo { 
+            font-size: 26px; 
+            font-weight: 900; 
+            font-style: italic; 
+            color: #ff3300; 
+            text-shadow: 0 0 10px #ff0000, 0 0 20px #ff6600; 
+            letter-spacing: 2px; 
+        }
+        .logo span { color: #ffcc00; }
+        
+        .slot-wrapper { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; }
+        
+        .slot-container { 
+            background: linear-gradient(135deg, #450000 0%, #150000 100%); 
+            border: 4px solid #ff3300; 
+            border-radius: 10px; 
+            padding: 8px; 
+            box-shadow: 0 0 30px rgba(255, 51, 0, 0.6), inset 0 0 20px rgba(50,0,0,0.9); 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 6px; 
+            width: 780px; 
+            max-width: 96vw; 
+            position: relative; 
+        }
+        
+        .reel { 
+            background: #1a0000; 
+            border: 2px solid #ff6600; 
+            border-radius: 6px; 
+            height: 380px; 
+            overflow: hidden; 
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.9); 
+        }
+        
+        .reel-strip { position: absolute; top: 0; width: 100%; display: flex; flex-direction: column; }
+        
+        .symbol { 
+            height: 95px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            position: relative; 
+            z-index: 2; 
+            background: transparent !important; 
+            user-select: none;
+        }
+
+        .symbol img {
+            width: 75px;
+            height: 75px;
+            object-fit: contain;
+            background: transparent !important;
+            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.7));
+        }
+
+        .win-lines-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .win-display { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            font-size: 36px; 
+            font-weight: bold; 
+            color: #ffcc00; 
+            text-shadow: 0 0 20px #ff3300, 0 0 10px #000; 
+            pointer-events: none; 
+            opacity: 0; 
+            z-index: 30; 
+            text-align: center; 
+        }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: #220000; border: 2px solid #ff3300; padding: 25px; border-radius: 10px; text-align: center; width: 320px; }
+        .modal-content h3 { color: #ffcc00; margin-bottom: 10px; }
+        .modal-content input { width: 100%; padding: 10px; margin: 15px 0; background: #000; border: 1px solid #ff6600; color: #fff; border-radius: 5px; font-size: 16px; text-align: center; outline: none; }
+        .modal-btn { background: #ff3300; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%; }
+
+        .bottom-bar { 
+            width: 100%; 
+            max-width: 900px; 
+            background: rgba(20, 0, 0, 0.95); 
+            border-top: 2px solid #661100; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 8px 15px; 
+            border-radius: 8px; 
+        }
+        
+        .control-group { display: flex; background: #1a0000; border: 1px solid #661100; border-radius: 20px; overflow: hidden; font-size: 12px; text-align: center; align-items: center; padding: 0 5px; }
+        .control-item { padding: 4px 8px; border-right: 1px solid #661100; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .control-item:last-child { border-right: none; }
+        .control-label { color: #ffaa88; font-size: 9px; margin-bottom: 2px; }
+        .bet-control-row { display: flex; align-items: center; gap: 4px; }
+        .bet-btn { background: #440000; color: white; border: 1px solid #882200; width: 20px; height: 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; justify-content: center; align-items: center; }
+        .bet-input { color: #fff; font-weight: bold; background: transparent; border: none; text-align: center; font-size: 13px; outline: none; width: 55px; }
+        
+        .spin-btn { background: linear-gradient(to bottom, #ff3300, #990000); border: 2px solid #ff6666; color: #fff; font-size: 16px; font-weight: 900; padding: 8px 25px; border-radius: 30px; cursor: pointer; box-shadow: 0 0 15px rgba(255, 51, 0, 0.6); }
+        .spin-btn:active { transform: scale(0.95); }
+        
+        .action-panel { display: flex; gap: 8px; align-items: center; }
+        .auto-btn { background: #1a0000; border: 1px solid #661100; color: #ccc; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 13px; }
+        .auto-btn.active { background: #ff3300; color: #fff; font-weight: bold; border-color: #ff6666; }
+
+        /* MOBİL EKRANLAR ÜÇÜN AVTOMATİK ÖLÇÜ TƏNZİMLƏMƏSİ (RESPONSIVE) */
+        @media (max-width: 768px) {
+            .logo { font-size: 18px; letter-spacing: 1px; }
+            .balance-box { font-size: 11px; }
+            .wallet-btn { padding: 3px 6px; font-size: 9px; }
+            
+            .slot-container { 
+                max-width: 98vw; 
+                padding: 4px; 
+                gap: 3px; 
+                border-width: 2px; 
+            }
+            
+            .reel { 
+                height: 240px; 
+                border-width: 1px; 
+            }
+            
+            .symbol { 
+                height: 60px; 
+            }
+
+            .symbol img {
+                width: 48px;
+                height: 48px;
+            }
+
+            .bottom-bar { 
+                padding: 6px 10px; 
+            }
+
+            .spin-btn { 
+                font-size: 14px; 
+                padding: 6px 16px; 
+            }
+
+            .auto-btn { 
+                padding: 6px 10px; 
+                font-size: 11px; 
+            }
+
+            .bet-input { width: 45px; font-size: 11px; }
+            .bet-btn { width: 18px; height: 18px; font-size: 11px; }
+            .control-label { font-size: 8px; }
+            .win-display { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="balance-box">
+            <div>BALANCE<br><span id="balance">₼10,000.00</span></div>
+            <button class="wallet-btn" onclick="openPromoModal()">Balans Artır</button>
+        </div>
+        <div class="logo">HELL <span>HOT 100</span></div>
+        <div style="width: 50px;"></div>
+    </div>
+
+    <div class="modal" id="promoModal">
+        <div class="modal-content">
+            <h3>Balans Artırma</h3>
+            <p style="font-size:12px; color:#aaa; margin-top:5px;">Promo kod daxil et (məs: BONUS1000):</p>
+            <input type="text" id="promoInput" placeholder="Kod...">
+            <button class="modal-btn" onclick="usePromoCode()">Təsdiq Et</button>
+            <button style="background:transparent; border:none; color:#ff4444; margin-top:12px; cursor:pointer; font-size:13px;" onclick="closePromoModal()">Bağla</button>
+        </div>
+    </div>
+
+    <div class="slot-wrapper">
+        <div class="slot-container" id="slotContainer">
+            <svg class="win-lines-svg" id="winLinesSvg"></svg>
+            <div class="reel" id="reel0"><div class="reel-strip" id="strip0"></div></div>
+            <div class="reel" id="reel1"><div class="reel-strip" id="strip1"></div></div>
+            <div class="reel" id="reel2"><div class="reel-strip" id="strip2"></div></div>
+            <div class="reel" id="reel3"><div class="reel-strip" id="strip3"></div></div>
+            <div class="reel" id="reel4"><div class="reel-strip" id="strip4"></div></div>
+        </div>
+        <div class="win-display" id="winDisplay"></div>
+    </div>
+
+    <div class="bottom-bar">
+        <div style="font-weight: bold; color: #ff3300; font-size: 11px;">LINES: 100</div>
+        <div class="control-group">
+            <div class="control-item"><span class="control-label">BET (₼)</span>
+                <div class="bet-control-row">
+                    <button class="bet-btn" onclick="changeBetStep(-1.00)">-</button>
+                    <input type="number" id="betInput" class="bet-input" value="1.00" min="1.00" max="100.00" step="1.00">
+                    <button class="bet-btn" onclick="changeBetStep(1.00)">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="action-panel">
+            <button class="auto-btn" id="autoBtn">AUTO</button>
+            <button class="spin-btn" id="spinBtn">SPIN</button>
+        </div>
+    </div>
+
+    <script>
+        const SIMVOLLAR = {
+            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', odenis: {3: 0, 4: 0, 5: 0}, ceki: 2 },
+            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', odenis: {3: 10, 4: 25, 5: 80}, ceki: 4 },
+            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', odenis: {3: 4, 4: 10, 5: 30}, ceki: 6 },
+            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', odenis: {3: 2, 4: 6, 5: 15}, ceki: 8 },
+            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', odenis: {3: 2, 4: 6, 5: 15}, ceki: 8 },
+            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', odenis: {3: 1, 4: 3, 5: 8}, ceki: 10 },
+        };
+
+        const SETIR_SAYI = 4;
+        const CARX_SAYI = 5;
+        const SABIT_XETT_SAYI = 100;
+
+        let paylines = [];
+        function generatePaylines() {
+            let basePatterns = [
+                [1,1,1,1,1], [0,0,0,0,0], [2,2,2,2,2], [3,3,3,3,3],
+                [0,1,2,1,0], [3,2,1,2,3], [0,1,1,1,0], [3,2,2,2,3],
+                [1,0,1,2,1], [2,3,2,1,2], [0,0,1,2,2], [3,3,2,1,1]
+            ];
+            for(let i=0; i<SABIT_XETT_SAYI; i++) {
+                paylines.push(basePatterns[i % basePatterns.length]);
+            }
+        }
+        generatePaylines();
+
+        function ceki_uzre_carx_hazirla() {
+            let carx_massivi = [];
+            for (let [simvol, melumat] of Object.entries(SIMVOLLAR)) {
+                for (let c = 0; c < melumat.ceki; c++) {
+                    carx_massivi.push(simvol);
+                }
+            }
+            return carx_massivi;
+        }
+
+        const dolu_carx = ceki_uzre_carx_hazirla();
+
+        let balance = 10000.00;
+        let isSpinning = false;
+        let autoInterval = null;
+        let spinCounter = 0;
+
+        function updateBalanceDisplay() {
+            document.getElementById('balance').innerText = `₼${balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+
+        function openPromoModal() { document.getElementById('promoModal').style.display = 'flex'; }
+        function closePromoModal() { document.getElementById('promoModal').style.display = 'none'; }
+
+        function usePromoCode() {
+            let codeInput = document.getElementById('promoInput').value.trim();
+            if (codeInput === "BONUS1000" || codeInput === "AZN10") {
+                balance += 1000.00;
+                updateBalanceDisplay();
+                alert(`Təbriklər! ₼1,000.00 əlavə olundu.`);
+                closePromoModal();
+            } else {
+                alert("Yanlış kod! (Məsələn: BONUS1000 yazın)");
+            }
+        }
+
+        function changeBetStep(amt) {
+            let input = document.getElementById('betInput');
+            let val = parseFloat(input.value) || 1.00;
+            val += amt;
+            if (val < 1.00) val = 1.00;
+            input.value = val.toFixed(2);
+        }
+
+        let currentMatrix = [];
+
+        function initReels() {
+            updateBalanceDisplay();
+            for (let i = 0; i < CARX_SAYI; i++) {
+                const strip = document.getElementById(`strip${i}`);
+                let html = '';
+                let col = [];
+                for (let j = 0; j < SETIR_SAYI; j++) {
+                    let randKey = dolu_carx[Math.floor(Math.random() * dolu_carx.length)];
+                    col.push(randKey);
+                    html += `<div class="symbol" data-col="${i}" data-row="${j}"><img src="${SIMVOLLAR[randKey].img}" alt="${randKey}"></div>`;
+                }
+                currentMatrix[i] = col;
+                strip.innerHTML = html;
+                strip.style.transform = 'translateY(0px)';
+            }
+        }
+
+        function firlat_matris() {
+            let matris = [];
+            for (let i = 0; i < CARX_SAYI; i++) {
+                let carx = [];
+                for (let r = 0; r < SETIR_SAYI; r++) {
+                    carx.push(dolu_carx[Math.floor(Math.random() * dolu_carx.length)]);
+                }
+                matris.push(carx);
+            }
+
+            paylines.forEach(line => {
+                let s0 = matris[0][line[0]];
+                let s1 = matris[1][line[1]];
+                let s2 = matris[2][line[2]];
+
+                if (s0 === s1 && Math.random() < 0.90) {
+                    let digerSimvolSecimleri = Object.keys(SIMVOLLAR).filter(sym => sym !== s0);
+                    matris[2][line[2]] = digerSimvolSecimleri[Math.floor(Math.random() * digerSimvolSecimleri.length)];
+                }
+            });
+
+            return matris;
+        }
+
+        function xetti_yoxla(xett_simvollari) {
+            let ilk_simvol = null;
+            let uygunluq_sayi = 0;
+            
+            for (let simvol of xett_simvollari) {
+                if (simvol === 'WILD') {
+                    uygunluq_sayi += 1;
+                    continue;
+                }
+                if (ilk_simvol === null) {
+                    ilk_simvol = simvol;
+                    uygunluq_sayi += 1;
+                } else if (simvol === ilk_simvol) {
+                    uygunluq_sayi += 1;
+                } else {
+                    break;
+                }
+            }
+            if (ilk_simvol === null && uygunluq_sayi > 0) {
+                ilk_simvol = 'LUCKY_7'; 
+            }
+            return { ilk_simvol, uygunluq_sayi };
+        }
+
+        function spinReels() {
+            if (isSpinning) return;
+            let bet = parseFloat(document.getElementById('betInput').value) || 1.00;
+            if (balance < bet) {
+                alert("Balans kifayət etmir!");
+                stopAuto();
+                return;
+            }
+            
+            balance -= bet;
+            spinCounter++;
+            updateBalanceDisplay();
+            
+            let winEl = document.getElementById('winDisplay');
+            winEl.style.opacity = '0';
+            winEl.innerText = '';
+            document.getElementById('winLinesSvg').innerHTML = '';
+
+            isSpinning = true;
+
+            let islenmis_matris = firlat_matris();
+            
+            let winningLinesInfo = [];
+            let totalWin = 0;
+
+            paylines.forEach(line => {
+                let xett_simvollari = [];
+                for (let i = 0; i < CARX_SAYI; i++) {
+                    xett_simvollari.push(islenmis_matris[i][line[i]]);
+                }
+
+                let res = xetti_yoxla(xett_simvollari);
+                if (res.uygunluq_sayi >= 3 && res.ilk_simvol && SIMVOLLAR[res.ilk_simvol]) {
+                    let odenislər = SIMVOLLAR[res.ilk_simvol].odenis;
+                    let multiplier = res.uygunluq_sayi >= 5 ? odenislər[5] : (res.uygunluq_sayi === 4 ? odenislər[4] : odenislər[3]);
+                    
+                    if (multiplier > 0) {
+                        let lineWin = ((bet / SABIT_XETT_SAYI) * multiplier) * 2.464;
+                        totalWin += lineWin;
+                        winningLinesInfo.push({ line: line, count: res.uygunluq_sayi });
+                    }
+                }
+            });
+
+            if (spinCounter >= 15) {
+                spinCounter = 0;
+                if (totalWin < 3.00) {
+                    totalWin = 3.00 + Math.random() * 4.00;
+                    winningLinesInfo.push({ line: [1,1,1,1,1], count: 4 });
+                }
+            }
+
+            currentMatrix = islenmis_matris;
+
+            let symbolHeight = window.innerWidth <= 768 ? 60 : 95;
+
+            for (let i = 0; i < CARX_SAYI; i++) {
+                const strip = document.getElementById(`strip${i}`);
+                let html = '';
+                for (let j = 0; j < 12; j++) {
+                    let symKey = (j >= 8) ? islenmis_matris[i][j - 8] : dolu_carx[Math.floor(Math.random() * dolu_carx.length)];
+                    html += `<div class="symbol" data-col="${i}" data-row="${j - 8}"><img src="${SIMVOLLAR[symKey].img}" alt="${symKey}"></div>`;
+                }
+                strip.innerHTML = html;
+                strip.style.transition = 'none';
+                strip.style.transform = 'translateY(0px)';
+
+                setTimeout(() => {
+                    strip.style.transition = `transform 600ms cubic-bezier(0.1, 0.8, 0.2, 1)`;
+                    strip.style.transform = `translateY(-${8 * symbolHeight}px)`;
+                    if (i === CARX_SAYI - 1) {
+                        setTimeout(() => {
+                            isSpinning = false;
+                            if (totalWin > 0) {
+                                balance += totalWin;
+                                updateBalanceDisplay();
+                                drawWinLines(winningLinesInfo);
+                                animateWinCounter(totalWin);
+                            }
+                        }, 600);
+                    }
+                }, i * 100);
+            }
+        }
+
+        function drawWinLines(winInfos) {
+            const svg = document.getElementById('winLinesSvg');
+            let svgContent = '';
+            const containerRect = document.getElementById('slotContainer').getBoundingClientRect();
+            
+            winInfos.forEach(info => {
+                let line = info.line;
+                let points = [];
+                for (let col = 0; col < info.count; col++) {
+                    let row = line[col];
+                    let symbolEl = document.querySelector(`.reel:nth-child(${col + 2}) .symbol[data-row="${row}"]`);
+                    if (symbolEl) {
+                        let rect = symbolEl.getBoundingClientRect();
+                        let cx = (rect.left + rect.width / 2) - containerRect.left;
+                        let cy = (rect.top + rect.height / 2) - containerRect.top;
+                        points.push(`${cx},${cy}`);
+                    }
+                }
+                if (points.length > 1) {
+                    svgContent += `<polyline points="${points.join(' ')}" fill="none" stroke="#ffcc00" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 6px #ff3300);" />`;
+                }
+            });
+            svg.innerHTML = svgContent;
+        }
+
+        function animateWinCounter(targetWin) {
+            let winEl = document.getElementById('winDisplay');
+            winEl.style.opacity = '1';
+            let currentVal = 0;
+            let duration = 1000;
+            let steps = 30;
+            let increment = targetWin / steps;
+            let stepTime = duration / steps;
+
+            let currentStep = 0;
+            let timer = setInterval(() => {
+                currentStep++;
+                currentVal += increment;
+                if (currentStep >= steps) {
+                    currentVal = targetWin;
+                    clearInterval(timer);
+                }
+                winEl.innerText = `WIN ₼${currentVal.toFixed(2)}`;
+            }, stepTime);
+        }
+
+        document.getElementById('spinBtn').addEventListener('click', () => { autoInterval ? stopAuto() : spinReels(); });
+        let autoBtn = document.getElementById('autoBtn');
+        autoBtn.addEventListener('click', () => {
+            if (autoInterval) { stopAuto(); } 
+            else {
+                autoBtn.classList.add('active'); autoBtn.innerText = 'STOP';
+                spinReels();
+                autoInterval = setInterval(() => { spinReels(); }, 1800);
+            }
+        });
+
+        function stopAuto() { clearInterval(autoInterval); autoInterval = null; autoBtn.classList.remove('active'); autoBtn.innerText = 'AUTO'; }
+
+        window.onload = function() { initReels(); };
+    </script>
+</body>
+</html>
