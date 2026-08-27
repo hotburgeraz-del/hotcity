@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hot City - Admin Control Panel</title>
+    <title>HOT CITY - Admin Control Panel</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { background: #05020a; color: #fff; padding: 20px; }
@@ -25,7 +25,7 @@
 </head>
 <body>
 
-    <h2>İdarəetmə Paneli - Canlı Oyunçu Nəzarəti</h2>
+    <h2>HOT CITY - Canlı Oyunçu və İdarəetmə Paneli</h2>
     
     <div class="action-row">
         <button class="refresh-btn" onclick="loadAdminData()" style="margin-bottom:0;">Siyahını Yenilə</button>
@@ -38,12 +38,12 @@
                     <th>Oyunçu ID</th>
                     <th>Qeydiyyat Kodu (Şifrə)</th>
                     <th>Aktivlik / Vaxt</th>
-                    <th>Balans</th>
-                    <th>Balansı Dəyiş (+5 / -5 AZN)</th>
+                    <th>Cari Balans</th>
+                    <th>Balansı Dəyiş (+10 / -10 ₼)</th>
                 </tr>
             </thead>
             <tbody id="adminPlayersList">
-                <!-- Oyunçular bura yüklənəcək -->
+                <!-- Oyunçular bura avtomatik yüklənəcək -->
             </tbody>
         </table>
     </div>
@@ -67,7 +67,7 @@
                 keys.forEach(id => {
                     let p = allPlayers[id];
                     let lastSeen = p.last_active || 0;
-                    let isOnline = (now - lastSeen) < 5000; // Son 5 saniyədə hərəkət edibsə onlayn sayılır
+                    let isOnline = (now - lastSeen) < 6000; // Son 6 saniyədə hərəkət edibsə onlayn sayılır
                     
                     let statusClass = isOnline ? 'online' : 'offline';
                     let statusText = isOnline ? 'Onlayn (Aktiv)' : 'Oflayn';
@@ -76,15 +76,15 @@
                     let tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td><b>${id}</b></td>
-                        <td style="color:#ffcc00; font-weight:bold; letter-spacing:2px;">${p.code || ''}</td>
+                        <td style="color:#ffcc00; font-weight:bold; letter-spacing:1px;">${p.code || ''}</td>
                         <td>
                             <span class="status-dot ${statusClass}"></span>
                             <b>${statusText}</b> <br><small style="color:#aaa;">Son görünmə: ${timeStr}</small>
                         </td>
                         <td>₼${(parseFloat(p.balance) || 0).toFixed(2)}</td>
                         <td>
-                            <button class="balance-btn" onclick="updateBalance('${id}', 5)">+5 ₼</button>
-                            <button class="balance-btn minus" onclick="updateBalance('${id}', -5)">-5 ₼</button>
+                            <button class="balance-btn" onclick="updateBalance('${id}', 10)">+10 ₼</button>
+                            <button class="balance-btn minus" onclick="updateBalance('${id}', -10)">-10 ₼</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -118,9 +118,9 @@
             }
         }
 
-        // Hər 1 saniyədən bir avtomatik yenilə
+        // Hər 2 saniyədən bir avtomatik yenilə
         window.onload = loadAdminData;
-        setInterval(loadAdminData, 1000);
+        setInterval(loadAdminData, 2000);
     </script>
 </body>
 </html>
