@@ -36,7 +36,23 @@
         .reel { background: #1a0000; border: 2px solid #ff6600; border-radius: 6px; overflow: hidden; position: relative; }
         .reel-strip { position: absolute; top: 0; width: 100%; display: flex; flex-direction: column; }
         .symbol { display: flex; justify-content: center; align-items: center; position: relative; z-index: 2; user-select: none; }
-        .symbol img { object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7)); }
+        .symbol img { object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7)); transition: opacity 0.2s; }
+        
+        /* Uduşan simvolların üzərində qırmızı xətt effekti */
+        .symbol.winning img { opacity: 0.85; }
+        .symbol.winning::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 5%;
+            width: 90%;
+            height: 4px;
+            background: #ff0000;
+            box-shadow: 0 0 10px #ff3300, 0 0 4px #fff;
+            transform: translateY(-50%);
+            z-index: 10;
+            border-radius: 2px;
+        }
 
         @media (min-width: 768px) {
             .logo { font-size: 26px; }
@@ -54,7 +70,7 @@
             .symbol img { width: 45px; height: 45px; }
         }
 
-        .win-display { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-weight: bold; color: #ffcc00; text-shadow: 0 0 20px #ff3300; pointer-events: none; opacity: 0; z-index: 30; text-align: center; transition: opacity 0.3s; }
+        .win-display { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 32px; font-weight: 900; color: #ffcc00; text-shadow: 0 0 20px #ff3300, 0 0 10px #000; pointer-events: none; opacity: 0; z-index: 30; text-align: center; transition: opacity 0.3s; }
         
         .modal { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 100; }
         .modal-content { background: #220000; border: 2px solid #ff3300; padding: 25px; border-radius: 10px; text-align: center; width: 340px; }
@@ -151,6 +167,26 @@
         let autoSpinActive = false;
         let autoSpinInterval = null;
 
+        // 100 Xəttin xəritəsini (şablonunu) yaradırıq (Hot 100 tipli mühərrik)
+        function generate100Paylines() {
+            let lines = [];
+            let basePatterns = [
+                [1,1,1,1,1], [0,0,0,0,0], [2,2,2,2,2], [3,3,3,3,3],
+                [0,1,2,1,0], [3,2,1,2,3], [1,2,1,2,1], [2,1,2,1,2],
+                [0,0,1,2,2], [3,3,2,1,1], [1,0,1,2,3], [2,3,2,1,0],
+                [0,1,1,1,0], [3,2,2,2,3], [1,1,0,1,1], [2,2,3,2,2]
+            ];
+            // 100 fərqli xətt kombinasiyası əldə etmək üçün
+            for (let i = 0; i < 100; i++) {
+                let p = basePatterns[i % basePatterns.length].map((val, idx) => {
+                    return (val + Math.floor(i / basePatterns.length)) % SETIR_SAYI;
+                });
+                lines.push(p);
+            }
+            return lines;
+        }
+        const PAYLINES = generate100Paylines();
+
         async function handleRegister() {
             let name = document.getElementById('regNameInput').value.trim();
             let gmail = document.getElementById('regEmailInput').value.trim();
@@ -168,7 +204,7 @@
                 let res = await response.json();
                 if (res.status === 'success') {
                     playerId = res.playerId;
-                    balance = res.balance;
+                    balance = res.balance; // 0.00 ilə başlayır
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                     document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
                     document.getElementById('authModal').style.display = 'none';
@@ -204,7 +240,7 @@
                 let html = '';
                 for (let j = 0; j < SETIR_SAYI; j++) {
                     let randKey = dolu_carx[Math.floor(Math.random() * dolu_carx.length)];
-                    html += `<div class="symbol"><img src="${SIMVOLLAR[randKey].img}" data-key="${randKey}"></div>`;
+                    html += `<div class="symbol" data-row="${j}" data-col="${i}"><img src="${SIMVOLLAR[randKey].img}" data-key="${randKey}"></div>`;
                 }
                 strip.innerHTML = html;
                 strip.style.top = '0px';
@@ -248,6 +284,7 @@
             document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
             isSpinning = true;
             hideWin();
+            clearWinningSymbols();
 
             let gridMatrix = [];
 
@@ -277,43 +314,100 @@
             }
 
             setTimeout(() => {
-                let totalWin = calculateWins(gridMatrix, bet);
-                if (totalWin > 0) {
-                    balance += totalWin;
+                // Hər çarxın son görünüşünü HTML-də səliqəli yerləşdiririk ki, xətləri yoxlaya bilək
+                updateDOMGrid(gridMatrix);
+
+                let winData = calculate100LinesWin(gridMatrix, bet);
+                if (winData.totalWin > 0) {
+                    balance += winData.totalWin;
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
-                    showWin(totalWin);
+                    highlightWinningSymbols(winData.winningCoords);
+                    showWin(winData.totalWin, winData.isBigWin);
                 }
                 isSpinning = false;
                 syncBalance();
             }, 700 + (CARX_SAYI * 100));
         }
 
-        function calculateWins(matrix, bet) {
+        function updateDOMGrid(matrix) {
+            for (let col = 0; col < CARX_SAYI; col++) {
+                const strip = document.getElementById(`strip${col}`);
+                let html = '';
+                for (let row = 0; row < SETIR_SAYI; row++) {
+                    let symKey = matrix[col][row];
+                    html += `<div class="symbol" data-row="${row}" data-col="${col}"><img src="${SIMVOLLAR[symKey].img}" data-key="${symKey}"></div>`;
+                }
+                strip.innerHTML = html;
+                strip.style.transition = 'none';
+                strip.style.top = '0px';
+            }
+        }
+
+        function calculate100LinesWin(matrix, totalBet) {
             let totalWin = 0;
-            for (let row = 0; row < SETIR_SAYI; row++) {
-                let firstSym = matrix[0][row];
+            let winningCoords = new Set();
+            let lineBet = totalBet / PAYLINES.length; // 100 xətt üzrə bölünür
+
+            PAYLINES.forEach(line => {
+                let firstColSym = matrix[0][line[0]];
+                let matchSym = firstColSym === 'WILD' ? null : firstColSym;
                 let count = 1;
+                let currentCoords = [[0, line[0]]];
+
                 for (let col = 1; col < CARX_SAYI; col++) {
-                    let currentSym = matrix[col][row];
-                    if (currentSym === firstSym || currentSym === 'WILD' || firstSym === 'WILD') {
+                    let sym = matrix[col][line[col]];
+                    if (matchSym === null && sym !== 'WILD') {
+                        matchSym = sym;
+                    }
+
+                    if (sym === matchSym || sym === 'WILD') {
                         count++;
+                        currentCoords.push([col, line[col]]);
                     } else {
                         break;
                     }
                 }
-                if (count >= 3) {
-                    let targetSym = (firstSym === 'WILD') ? matrix[1][row] : firstSym;
-                    if (SIMVOLLAR[targetSym] && SIMVOLLAR[targetSym].pay[count]) {
-                        totalWin += bet * SIMVOLLAR[targetSym].pay[count];
-                    }
+
+                if (count >= 3 && matchSym && SIMVOLLAR[matchSym] && SIMVOLLAR[matchSym].pay[count]) {
+                    let lineWin = lineBet * SIMVOLLAR[matchSym].pay[count];
+                    totalWin += lineWin;
+                    currentCoords.forEach(coord => winningCoords.add(`${coord[0]}-${coord[1]}`));
                 }
-            }
-            return totalWin;
+            });
+
+            let isBigWin = totalWin >= (totalBet * 10); // Ümumi mərcin 10 qatından çoxdursa Big Win sayılır
+            return { totalWin, winningCoords, isBigWin };
         }
 
-        function showWin(amount) {
+        function highlightWinningCoords(coordsSet) {
+            coordsSet.forEach(coordStr => {
+                let [col, row] = coordStr.split('-').map(Number);
+                const strip = document.getElementById(`strip${col}`);
+                if (strip) {
+                    let symbolDivs = strip.getElementsByClassName('symbol');
+                    if (symbolDivs[row]) {
+                        symbolDivs[row].classList.add('winning');
+                    }
+                }
+            });
+        }
+        
+        // Şərti qısa yol
+        function highlightWinningSymbols(coordsSet) {
+            highlightWinningCoords(coordsSet);
+        }
+
+        function clearWinningSymbols() {
+            document.querySelectorAll('.symbol').forEach(el => el.classList.remove('winning'));
+        }
+
+        function showWin(amount, isBigWin) {
             let winDisplay = document.getElementById('winDisplay');
-            winDisplay.innerText = `UDAÇA! ₼${amount.toFixed(2)}`;
+            if (isBigWin) {
+                winDisplay.innerText = `BIG WIN! ₼${amount.toFixed(2)}`;
+            } else {
+                winDisplay.innerText = `WIN! ₼${amount.toFixed(2)}`;
+            }
             winDisplay.style.opacity = '1';
         }
 
