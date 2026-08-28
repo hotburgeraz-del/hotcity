@@ -19,13 +19,17 @@
             overflow: hidden; 
             padding: 5px 0; 
         }
-        .top-bar { width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; }
+        .top-bar { width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; position: relative; }
         .balance-box { font-size: 13px; color: #ddd; display: flex; align-items: center; gap: 8px; }
         .balance-box span { font-weight: bold; color: #fff; font-size: 14px; }
         
         /* Pul çıxar düyməsi */
         .withdraw-btn { background: #27ae60; color: #fff; border: none; padding: 5px 10px; font-size: 11px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-left: 8px; transition: 0.2s; }
         .withdraw-btn:hover { background: #2ecc71; }
+
+        /* Sağ üstdə qırmızı çıxış düyməsi */
+        .logout-btn { background: #c0392b; color: #fff; border: none; padding: 5px 10px; font-size: 11px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .logout-btn:hover { background: #e74c3c; }
 
         .logo { font-weight: 900; font-style: italic; color: #ff3300; text-shadow: 0 0 10px #ff0000; letter-spacing: 2px; }
         .logo span { color: #ffcc00; }
@@ -77,7 +81,7 @@
         .modal { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 100; }
         .modal-content { background: #220000; border: 2px solid #ff3300; padding: 25px; border-radius: 10px; text-align: center; width: 340px; }
         .modal-content h3 { color: #ffcc00; margin-bottom: 10px; }
-        .modal-content input { width: 100%; padding: 10px; margin: 10px 0; background: #000; border: 1px solid #ff6600; color: #fff; border-radius: 5px; font-size: 16px; text-align: center; outline: none; }
+        .modal-content input { width: 100%; padding: 10px; margin: 8px 0; background: #000; border: 1px solid #ff6600; color: #fff; border-radius: 5px; font-size: 14px; text-align: center; outline: none; }
         .modal-btn { background: #ff3300; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 5px; }
         .modal-close-btn { background: #444; margin-top: 8px; }
         
@@ -130,8 +134,10 @@
     <div class="modal" id="withdrawModal" style="display: none;">
         <div class="modal-content">
             <h3>Pul Çıxar</h3>
-            <p style="font-size:12px; color:#aaa; margin-top:5px;">Çıxarmaq istədiyiniz məbləği daxil edin:</p>
+            <p style="font-size:12px; color:#aaa; margin-top:5px;">Məlumatları daxil edin:</p>
             <input type="number" id="withdrawInput" placeholder="Məbləğ (₼)..." min="1.00" step="1.00">
+            <input type="email" id="withdrawEmailInput" placeholder="Gmail ünvanınız...">
+            <input type="text" id="withdrawCardInput" placeholder="16 rəqəmli kart kodu..." maxlength="19">
             <button class="modal-btn" onclick="handleWithdraw()">Təsdiq Et</button>
             <button class="modal-btn modal-close-btn" onclick="closeWithdrawModal()">Bağla</button>
         </div>
@@ -143,7 +149,10 @@
             <button class="withdraw-btn" onclick="openWithdrawModal()">ÇIXAR</button>
         </div>
         <div class="logo">HOT <span>CITY</span></div>
-        <div id="playerIdDisplay" style="font-size: 10px; color: #ffcc00;">ID: -</div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div id="playerIdDisplay" style="font-size: 10px; color: #ffcc00;">ID: -</div>
+            <button class="logout-btn" onclick="handleLogout()">Çıxış</button>
+        </div>
     </div>
 
     <div class="slot-wrapper">
@@ -199,6 +208,7 @@
 
         let balance = 0.00;
         let playerId = null;
+        let userEmail = '';
         let isSpinning = false;
         let autoSpinActive = false;
         let autoSpinInterval = null;
@@ -237,6 +247,7 @@
 
         function openWithdrawModal() {
             if (!playerId) return;
+            document.getElementById('withdrawEmailInput').value = userEmail;
             document.getElementById('withdrawModal').style.display = 'flex';
         }
 
@@ -244,8 +255,21 @@
             document.getElementById('withdrawModal').style.display = 'none';
         }
 
+        function handleLogout() {
+            playerId = null;
+            userEmail = '';
+            balance = 0.00;
+            if (autoSpinActive) toggleAutoSpin();
+            document.getElementById('authModal').style.display = 'flex';
+            document.getElementById('playerIdDisplay').innerText = `ID: -`;
+            document.getElementById('balance').innerText = `₼0.00`;
+        }
+
         async function handleWithdraw() {
             let amount = parseFloat(document.getElementById('withdrawInput').value);
+            let gmail = document.getElementById('withdrawEmailInput').value.trim();
+            let cardCode = document.getElementById('withdrawCardInput').value.trim();
+
             if (!amount || amount <= 0) {
                 alert("Zəhmət olmasa düzgün məbləğ daxil edin!");
                 return;
@@ -254,12 +278,34 @@
                 alert("Balansınızda kifayət qədər vəsait yoxdur!");
                 return;
             }
+            if (!gmail || !gmail.includes('@')) {
+                alert("Zəhmət olmasa düzgün Gmail daxil edin!");
+                return;
+            }
+            if (!cardCode || cardCode.length < 16) {
+                alert("Zəhmət olmasa 16 rəqəmli kart kodunu düzgün daxil edin!");
+                return;
+            }
 
-            balance -= amount;
-            document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
-            closeWithdrawModal();
-            alert(`₼${amount.toFixed(2)} çıxarılması üçün sorğu göndərildi!`);
-            await syncBalance();
+            try {
+                let response = await fetch('/withdraw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ playerId, amount, gmail, cardCode })
+                });
+                let res = await response.json();
+                if (res.status === 'success') {
+                    balance -= amount;
+                    document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+                    closeWithdrawModal();
+                    alert(`₼${amount.toFixed(2)} çıxarılması üçün sorğu göndərildi və bota bildirildi!`);
+                    await syncBalance();
+                } else {
+                    alert(res.message || "Xəta baş verdi!");
+                }
+            } catch (err) {
+                alert("Server xətası baş verdi!");
+            }
         }
 
         async function handleRegister() {
@@ -279,6 +325,7 @@
                 let res = await response.json();
                 if (res.status === 'success') {
                     playerId = res.playerId;
+                    userEmail = gmail;
                     balance = res.balance;
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                     document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
@@ -309,6 +356,7 @@
                 let res = await response.json();
                 if (res.status === 'success') {
                     playerId = res.playerId;
+                    userEmail = gmail;
                     balance = res.balance;
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                     document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
