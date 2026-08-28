@@ -23,11 +23,9 @@
         .balance-box { font-size: 13px; color: #ddd; display: flex; align-items: center; gap: 8px; }
         .balance-box span { font-weight: bold; color: #fff; font-size: 14px; }
         
-        /* Pul çıxar düyməsi */
         .withdraw-btn { background: #27ae60; color: #fff; border: none; padding: 5px 10px; font-size: 11px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-left: 8px; transition: 0.2s; }
         .withdraw-btn:hover { background: #2ecc71; }
 
-        /* Sağ üstdə qırmızı çıxış düyməsi */
         .logout-btn { background: #c0392b; color: #fff; border: none; padding: 5px 10px; font-size: 11px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
         .logout-btn:hover { background: #e74c3c; }
 
@@ -104,7 +102,6 @@
 </head>
 <body>
 
-    <!-- Qeydiyyat və Giriş Modalı -->
     <div class="modal" id="authModal">
         <div class="modal-content">
             <div class="auth-tabs">
@@ -130,7 +127,6 @@
         </div>
     </div>
 
-    <!-- Pul Çıxarma Modalı -->
     <div class="modal" id="withdrawModal" style="display: none;">
         <div class="modal-content">
             <h3>Pul Çıxar</h3>
@@ -218,8 +214,8 @@
             let basePatterns = [
                 [1,1,1,1,1], [0,0,0,0,0], [2,2,2,2,2], [3,3,3,3,3],
                 [0,1,2,1,0], [3,2,1,2,3], [1,2,1,2,1], [2,1,2,1,2],
-                [0,0,1,2,2], [3,3,2,1,1], [1,0,1,2,3], [2,3,2,1,0],
-                [0,1,1,1,0], [3,2,2,2,3], [1,1,0,1,1], [2,2,3,2,2]
+                [0,1,0,1,0], [3,2,3,2,3], [1,0,1,0,1], [2,3,2,3,2],
+                [0,0,1,0,0], [3,3,2,3,3], [1,1,2,1,1], [2,2,1,2,2]
             ];
             for (let i = 0; i < 100; i++) {
                 let p = basePatterns[i % basePatterns.length].map((val, idx) => {
@@ -256,6 +252,10 @@
         }
 
         function handleLogout() {
+            // Çıxış düyməsinə basıldıqda localStorage təmizlənir və hesabdan çıxılır
+            localStorage.removeItem('hotcity_playerId');
+            localStorage.removeItem('hotcity_userEmail');
+
             playerId = null;
             userEmail = '';
             balance = 0.00;
@@ -327,6 +327,11 @@
                     playerId = res.playerId;
                     userEmail = gmail;
                     balance = res.balance;
+
+                    // Məlumatları yaddaşda saxla ki, F5 zamanı silinməsin
+                    localStorage.setItem('hotcity_playerId', playerId);
+                    localStorage.setItem('hotcity_userEmail', userEmail);
+
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                     document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
                     document.getElementById('authModal').style.display = 'none';
@@ -358,6 +363,11 @@
                     playerId = res.playerId;
                     userEmail = gmail;
                     balance = res.balance;
+
+                    // Məlumatları yaddaşda saxla ki, F5 zamanı silinməsin
+                    localStorage.setItem('hotcity_playerId', playerId);
+                    localStorage.setItem('hotcity_userEmail', userEmail);
+
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                     document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
                     document.getElementById('authModal').style.display = 'none';
@@ -368,6 +378,36 @@
             } catch (err) {
                 alert("Server xətası baş verdi!");
             }
+        }
+
+        // Səhifə açıldıqda əgər əvvəlcədən daxil olunubsa, avtomatik bərpa et
+        async function checkSavedSession() {
+            let savedId = localStorage.getItem('hotcity_playerId');
+            let savedEmail = localStorage.getItem('hotcity_userEmail');
+
+            if (savedId && savedEmail) {
+                try {
+                    let response = await fetch('/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ gmail: savedEmail, playerId: savedId })
+                    });
+                    let res = await response.json();
+                    if (res.status === 'success') {
+                        playerId = res.playerId;
+                        userEmail = savedEmail;
+                        balance = res.balance;
+                        document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+                        document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
+                        document.getElementById('authModal').style.display = 'none';
+                        setInterval(sendHeartbeat, 3000);
+                        return;
+                    }
+                } catch (err) {
+                    console.error("Session restoration error:", err);
+                }
+            }
+            document.getElementById('authModal').style.display = 'flex';
         }
 
         async function sendHeartbeat() {
@@ -628,7 +668,10 @@
             }
         }
 
-        window.onload = function() { initReels(); };
+        window.onload = function() { 
+            initReels(); 
+            checkSavedSession(); // Səhifə yüklənəndə yaddaşdakı sessiyanı yoxla
+        };
     </script>
 </body>
 </html>
