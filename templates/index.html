@@ -36,10 +36,24 @@
         .reel { background: #1a0000; border: 2px solid #ff6600; border-radius: 6px; overflow: hidden; position: relative; }
         .reel-strip { position: absolute; top: 0; width: 100%; display: flex; flex-direction: column; }
         .symbol { display: flex; justify-content: center; align-items: center; position: relative; z-index: 2; user-select: none; }
-        .symbol img { object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7)); transition: opacity 0.2s; }
+        .symbol img { object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7)); transition: opacity 0.2s, transform 0.2s; }
         
-        /* Uduşan simvolların üzərində qırmızı xətt effekti */
-        .symbol.winning img { opacity: 0.85; }
+        /* Uduşan simvollar üçün Nəbz (Pulse) və İşqlı xətt effekti */
+        @keyframes pulseSymbol {
+            0% { transform: scale(1); filter: drop-shadow(0 0 2px #ff3300); }
+            50% { transform: scale(1.18); filter: drop-shadow(0 0 15px #ffcc00) brightness(1.4); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 2px #ff3300); }
+        }
+
+        .symbol.winning {
+            animation: pulseSymbol 0.6s infinite ease-in-out;
+            z-index: 20;
+        }
+
+        .symbol.winning img { 
+            opacity: 1; 
+        }
+
         .symbol.winning::after {
             content: '';
             position: absolute;
@@ -48,9 +62,9 @@
             width: 90%;
             height: 4px;
             background: #ff0000;
-            box-shadow: 0 0 10px #ff3300, 0 0 4px #fff;
+            box-shadow: 0 0 12px #ff3300, 0 0 6px #fff;
             transform: translateY(-50%);
-            z-index: 10;
+            z-index: 25;
             border-radius: 2px;
         }
 
@@ -167,7 +181,6 @@
         let autoSpinActive = false;
         let autoSpinInterval = null;
 
-        // 100 Xəttin xəritəsini (şablonunu) yaradırıq (Hot 100 tipli mühərrik)
         function generate100Paylines() {
             let lines = [];
             let basePatterns = [
@@ -176,7 +189,6 @@
                 [0,0,1,2,2], [3,3,2,1,1], [1,0,1,2,3], [2,3,2,1,0],
                 [0,1,1,1,0], [3,2,2,2,3], [1,1,0,1,1], [2,2,3,2,2]
             ];
-            // 100 fərqli xətt kombinasiyası əldə etmək üçün
             for (let i = 0; i < 100; i++) {
                 let p = basePatterns[i % basePatterns.length].map((val, idx) => {
                     return (val + Math.floor(i / basePatterns.length)) % SETIR_SAYI;
@@ -204,7 +216,7 @@
                 let res = await response.json();
                 if (res.status === 'success') {
                     playerId = res.playerId;
-                    balance = res.balance; // 0.00 ilə başlayır
+                    balance = res.balance;
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                     document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
                     document.getElementById('authModal').style.display = 'none';
@@ -314,7 +326,6 @@
             }
 
             setTimeout(() => {
-                // Hər çarxın son görünüşünü HTML-də səliqəli yerləşdiririk ki, xətləri yoxlaya bilək
                 updateDOMGrid(gridMatrix);
 
                 let winData = calculate100LinesWin(gridMatrix, bet);
@@ -346,7 +357,7 @@
         function calculate100LinesWin(matrix, totalBet) {
             let totalWin = 0;
             let winningCoords = new Set();
-            let lineBet = totalBet / PAYLINES.length; // 100 xətt üzrə bölünür
+            let lineBet = totalBet / PAYLINES.length;
 
             PAYLINES.forEach(line => {
                 let firstColSym = matrix[0][line[0]];
@@ -375,11 +386,11 @@
                 }
             });
 
-            let isBigWin = totalWin >= (totalBet * 10); // Ümumi mərcin 10 qatından çoxdursa Big Win sayılır
+            let isBigWin = totalWin >= (totalBet * 10);
             return { totalWin, winningCoords, isBigWin };
         }
 
-        function highlightWinningCoords(coordsSet) {
+        function highlightWinningSymbols(coordsSet) {
             coordsSet.forEach(coordStr => {
                 let [col, row] = coordStr.split('-').map(Number);
                 const strip = document.getElementById(`strip${col}`);
@@ -390,11 +401,6 @@
                     }
                 }
             });
-        }
-        
-        // Şərti qısa yol
-        function highlightWinningSymbols(coordsSet) {
-            highlightWinningCoords(coordsSet);
         }
 
         function clearWinningSymbols() {
