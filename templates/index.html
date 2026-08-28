@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HOT CITY - Simulator</title>
+    <title>Hot City Simulator</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        
         body { 
             background-color: #05020a; 
             background-image: radial-gradient(circle, #2a0202 0%, #05020a 100%); 
@@ -20,212 +19,84 @@
             overflow: hidden; 
             padding: 5px 0; 
         }
-
-        /* LÖADING (YÜKLƏMƏ) EKRANI */
-        #loadingScreen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #05020a;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease;
-        }
-        .loader-logo {
-            font-size: 32px;
-            font-weight: 900;
-            font-style: italic;
-            color: #ff3300;
-            text-shadow: 0 0 15px #ff0000;
-            margin-bottom: 20px;
-            letter-spacing: 3px;
-        }
-        .loader-logo span { color: #ffcc00; }
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 51, 0, 0.2);
-            border-top: 5px solid #ff3300;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .top-bar { 
-            width: 100%; 
-            max-width: 900px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 0 15px; 
-        }
-
-        .balance-box { font-size: 13px; color: #ddd; display: flex; align-items: center; gap: 10px; }
-        .balance-box span { font-weight: bold; color: #ffcc00; font-size: 15px; }
-        
-        /* PARALEL ÇƏRGƏDƏ İDARƏETMƏ DÜYMƏLƏRİ (SAĞ ÜST) */
-        .top-actions {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .top-btn { 
-            background: #27ae60; 
-            border: none; 
-            color: #fff; 
-            font-weight: bold; 
-            padding: 5px 10px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 11px; 
-            box-shadow: 0 0 8px rgba(39, 174, 96, 0.5); 
-        }
-        .top-btn.minus { background: #c0392b; box-shadow: 0 0 8px rgba(192, 57, 43, 0.5); }
-        .top-btn.logout { background: #444; color: #ff4444; }
-        .top-btn:active { transform: scale(0.92); }
-        
-        .logo { 
-            font-size: 24px; 
-            font-weight: 900; 
-            font-style: italic; 
-            color: #ff3300; 
-            text-shadow: 0 0 10px #ff0000; 
-            letter-spacing: 2px; 
-        }
+        .top-bar { width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; }
+        .balance-box { font-size: 13px; color: #ddd; display: flex; align-items: center; gap: 8px; }
+        .balance-box span { font-weight: bold; color: #fff; font-size: 14px; }
+        .logo { font-weight: 900; font-style: italic; color: #ff3300; text-shadow: 0 0 10px #ff0000; letter-spacing: 2px; }
         .logo span { color: #ffcc00; }
-        
-        .slot-wrapper { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; }
+        .slot-wrapper { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; flex-grow: 1; }
         
         .slot-container { 
             background: linear-gradient(135deg, #450000 0%, #150000 100%); 
-            border: 4px solid #ff3300; 
-            border-radius: 10px; 
-            padding: 8px; 
-            box-shadow: 0 0 30px rgba(255, 51, 0, 0.6); 
-            display: grid; 
-            grid-template-columns: repeat(5, 1fr); 
-            gap: 6px; 
-            width: 780px; 
-            max-width: 96vw; 
-            position: relative; 
+            border: 4px solid #ff3300; border-radius: 10px; padding: 6px; 
+            box-shadow: 0 0 25px rgba(255, 51, 0, 0.6); 
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; position: relative; 
         }
-        
-        .reel { 
-            background: #1a0000; 
-            border: 2px solid #ff6600; 
-            border-radius: 6px; 
-            height: 380px; 
-            overflow: hidden; 
-            position: relative; 
-            display: flex; 
-            flex-direction: column; 
-        }
-        
+
+        .reel { background: #1a0000; border: 2px solid #ff6600; border-radius: 6px; overflow: hidden; position: relative; }
         .reel-strip { position: absolute; top: 0; width: 100%; display: flex; flex-direction: column; }
-        
-        .symbol { 
-            height: 95px; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            position: relative; 
-            z-index: 2; 
-            user-select: none;
+        .symbol { display: flex; justify-content: center; align-items: center; position: relative; z-index: 2; user-select: none; }
+        .symbol img { object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7)); }
+
+        @media (min-width: 768px) {
+            .logo { font-size: 26px; }
+            .slot-container { width: 750px; }
+            .reel { height: 360px; }
+            .symbol { height: 90px; }
+            .symbol img { width: 70px; height: 70px; }
         }
 
-        .symbol img {
-            width: 75px;
-            height: 75px;
-            object-fit: contain;
-            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.7));
+        @media (max-width: 767px) {
+            .logo { font-size: 18px; }
+            .slot-container { width: 96vw; max-width: 400px; }
+            .reel { height: 240px; border-width: 1px; }
+            .symbol { height: 60px; }
+            .symbol img { width: 45px; height: 45px; }
         }
 
-        .win-lines-svg {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 20;
-        }
-
-        .win-display { 
-            position: absolute; 
-            top: 50%; left: 50%; 
-            transform: translate(-50%, -50%); 
-            font-size: 36px; 
-            font-weight: bold; 
-            color: #ffcc00; 
-            text-shadow: 0 0 20px #ff3300; 
-            pointer-events: none; 
-            opacity: 0; 
-            z-index: 30; 
-            text-align: center; 
-        }
+        .win-display { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-weight: bold; color: #ffcc00; text-shadow: 0 0 20px #ff3300; pointer-events: none; opacity: 0; z-index: 30; text-align: center; transition: opacity 0.3s; }
         
-        .bottom-bar { 
-            width: 100%; 
-            max-width: 900px; 
-            background: rgba(20, 0, 0, 0.95); 
-            border-top: 2px solid #661100; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 8px 15px; 
-            border-radius: 8px; 
-        }
+        .modal { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: #220000; border: 2px solid #ff3300; padding: 25px; border-radius: 10px; text-align: center; width: 340px; }
+        .modal-content h3 { color: #ffcc00; margin-bottom: 10px; }
+        .modal-content input { width: 100%; padding: 10px; margin: 10px 0; background: #000; border: 1px solid #ff6600; color: #fff; border-radius: 5px; font-size: 16px; text-align: center; outline: none; }
+        .modal-btn { background: #ff3300; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 5px; }
         
+        .bottom-bar { width: 100%; max-width: 900px; background: rgba(20, 0, 0, 0.95); border-top: 2px solid #661100; display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; border-radius: 8px; }
         .control-group { display: flex; background: #1a0000; border: 1px solid #661100; border-radius: 20px; padding: 0 5px; align-items: center; }
         .control-item { padding: 4px 8px; display: flex; flex-direction: column; align-items: center; }
         .control-label { color: #ffaa88; font-size: 9px; margin-bottom: 2px; }
         .bet-control-row { display: flex; align-items: center; gap: 4px; }
         .bet-btn { background: #440000; color: white; border: 1px solid #882200; width: 20px; height: 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .bet-input { color: #fff; font-weight: bold; background: transparent; border: none; text-align: center; font-size: 13px; outline: none; width: 55px; }
-        
-        .spin-btn { background: linear-gradient(to bottom, #ff3300, #990000); border: 2px solid #ff6666; color: #fff; font-size: 16px; font-weight: 900; padding: 8px 25px; border-radius: 30px; cursor: pointer; box-shadow: 0 0 15px rgba(255, 51, 0, 0.6); }
-        .spin-btn:active { transform: scale(0.95); }
-        
         .action-panel { display: flex; gap: 8px; align-items: center; }
-        .auto-btn { background: #1a0000; border: 1px solid #661100; color: #ccc; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 13px; }
-        .auto-btn.active { background: #ff3300; color: #fff; font-weight: bold; }
-
-        @media (max-width: 768px) {
-            .logo { font-size: 16px; }
-            .balance-box { font-size: 11px; }
-            .slot-container { max-width: 98vw; padding: 4px; gap: 3px; }
-            .reel { height: 240px; }
-            .symbol { height: 60px; }
-            .symbol img { width: 48px; height: 48px; }
-            .spin-btn { font-size: 14px; padding: 6px 16px; }
-            .top-btn { padding: 4px 6px; font-size: 9px; }
-        }
+        .spin-btn { background: linear-gradient(to bottom, #ff3300, #990000); border: 2px solid #ff6666; color: #fff; font-size: 15px; font-weight: 900; padding: 8px 22px; border-radius: 30px; cursor: pointer; }
+        .auto-btn { background: linear-gradient(to bottom, #444, #222); border: 2px solid #888; color: #fff; font-size: 12px; font-weight: bold; padding: 9px 12px; border-radius: 30px; cursor: pointer; }
+        .auto-btn.active { background: linear-gradient(to bottom, #2ecc71, #27ae60); border-color: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
     </style>
 </head>
 <body>
 
-    <!-- YÜKLƏMƏ EKRANI -->
-    <div id="loadingScreen">
-        <div class="loader-logo">HOT <span>CITY</span></div>
-        <div class="spinner"></div>
-        <p style="color: #aaa; margin-top: 15px; font-size: 13px;">Oyun yüklənir, zəhmət olmasa gözləyin...</p>
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <h3>HOT CITY Qeydiyyat</h3>
+            <p style="font-size:12px; color:#aaa; margin-top:5px;">Oyuna başlamaq üçün ad və gmail daxil edin:</p>
+            <input type="text" id="regNameInput" placeholder="Adınız...">
+            <input type="email" id="regEmailInput" placeholder="Gmail ünvanınız...">
+            <button class="modal-btn" onclick="handleRegister()">Oyuna Başla</button>
+        </div>
     </div>
 
     <div class="top-bar">
         <div class="balance-box">
-            <div>BALANS<br><span id="balance">₼0.00</span></div>
+            <div>BALANCE<br><span id="balance">₼0.00</span></div>
         </div>
         <div class="logo">HOT <span>CITY</span></div>
-        <!-- PARALEL ÇƏRGƏDƏ İDARƏETMƏ DÜYMƏLƏRİ -->
-        <div class="top-actions">
-            <button class="top-btn" onclick="modifyPlayerBalance(5)">+ Artır</button>
-            <button class="top-btn minus" onclick="modifyPlayerBalance(-5)">- Çıxar</button>
-            <button class="top-btn logout" onclick="playerLogout()">Çıxış</button>
-        </div>
+        <div id="playerIdDisplay" style="font-size: 10px; color: #ffcc00;">ID: -</div>
     </div>
 
     <div class="slot-wrapper">
         <div class="slot-container" id="slotContainer">
-            <svg class="win-lines-svg" id="winLinesSvg"></svg>
             <div class="reel" id="reel0"><div class="reel-strip" id="strip0"></div></div>
             <div class="reel" id="reel1"><div class="reel-strip" id="strip1"></div></div>
             <div class="reel" id="reel2"><div class="reel-strip" id="strip2"></div></div>
@@ -236,7 +107,7 @@
     </div>
 
     <div class="bottom-bar">
-        <div style="font-weight: bold; color: #ff3300; font-size: 11px;">LINES: 100</div>
+        <div style="width: 40px;"></div>
         <div class="control-group">
             <div class="control-item"><span class="control-label">BET (₼)</span>
                 <div class="bet-control-row">
@@ -247,145 +118,76 @@
             </div>
         </div>
         <div class="action-panel">
-            <button class="auto-btn" id="autoBtn">AUTO</button>
-            <button class="spin-btn" id="spinBtn">SPIN</button>
+            <button class="auto-btn" id="autoBtn" onclick="toggleAutoSpin()">AUTO</button>
+            <button class="spin-btn" id="spinBtn" onclick="spinReels()">SPIN</button>
         </div>
     </div>
 
     <script>
-        // QLOBAL TƏHLÜKƏSİZLİK VƏ İD SİSTEMİ
-        let playerId = localStorage.getItem('hotcity_player_id');
-        let playerCode = localStorage.getItem('hotcity_player_code');
-
-        if (!playerId) {
-            playerId = 'HOT_' + Math.floor(1000 + Math.random() * 9000);
-            playerCode = 'PASS_' + Math.floor(1000 + Math.random() * 9000);
-            localStorage.setItem('hotcity_player_id', playerId);
-            localStorage.setItem('hotcity_player_code', playerCode);
-        }
-
-        let balance = 0.00;
-        let isSpinning = false;
-        let autoInterval = null;
-
-        // SERVERLƏ ƏLAQƏ VƏ SİNXRONİZASİYA (KİBER QORUMA İLƏ)
-        async function syncPlayerData() {
-            try {
-                let res = await fetch('/get_data');
-                let allPlayers = await res.json();
-
-                if (!allPlayers[playerId]) {
-                    // Yeni oyunçu avtomatik 0.00 balansla adminə düşür
-                    allPlayers[playerId] = {
-                        code: playerCode,
-                        balance: 0.00,
-                        last_active: Date.now()
-                    };
-                } else {
-                    balance = parseFloat(allPlayers[playerId].balance) || 0.00;
-                    allPlayers[playerId].last_active = Date.now();
-                }
-
-                updateBalanceDisplay();
-
-                await fetch('/save_data', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(allPlayers)
-                });
-            } catch (err) {
-                console.error("Sinxronizasiya xətası:", err);
-            }
-        }
-
-        // Hər 2 saniyədən bir serverlə balans və aktivliyi yenilə
-        setInterval(syncPlayerData, 2000);
-
-        function updateBalanceDisplay() {
-            document.getElementById('balance').innerText = `₼${balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        }
-
-        async function modifyPlayerBalance(amount) {
-            try {
-                let res = await fetch('/get_data');
-                let allPlayers = await res.json();
-                if (allPlayers[playerId]) {
-                    balance = (parseFloat(allPlayers[playerId].balance) || 0) + amount;
-                    if (balance < 0) balance = 0;
-                    allPlayers[playerId].balance = balance;
-
-                    await fetch('/save_data', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(allPlayers)
-                    });
-                    updateBalanceDisplay();
-                }
-            } catch (err) {
-                console.error("Balans dəyişdirilə bilmədi:", err);
-            }
-        }
-
-        function playerLogout() {
-            if (confirm("Çıxış etmək istədiyinizə əminsinizmi?")) {
-                localStorage.removeItem('hotcity_player_id');
-                localStorage.removeItem('hotcity_player_code');
-                location.reload();
-            }
-        }
-
         const SIMVOLLAR = {
-            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', odenis: {3: 0, 4: 0, 5: 0}, ceki: 2 },
-            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', odenis: {3: 10, 4: 25, 5: 80}, ceki: 4 },
-            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', odenis: {3: 4, 4: 10, 5: 30}, ceki: 6 },
-            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', odenis: {3: 2, 4: 6, 5: 15}, ceki: 8 },
-            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', odenis: {3: 2, 4: 6, 5: 15}, ceki: 8 },
-            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', odenis: {3: 1, 4: 3, 5: 8}, ceki: 10 },
+            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2, pay: {3: 10, 4: 50, 5: 200} },
+            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 4, pay: {3: 5, 4: 20, 5: 100} },
+            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 6, pay: {3: 3, 4: 10, 5: 40} },
+            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 8, pay: {3: 2, 4: 8, 5: 30} },
+            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', ceki: 8, pay: {3: 2, 4: 8, 5: 30} },
+            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', ceki: 10, pay: {3: 1, 4: 5, 5: 20} },
         };
 
-        const SETIR_SAYI = 4;
         const CARX_SAYI = 5;
-        const SABIT_XETT_SAYI = 100;
-
-        let paylines = [];
-        function generatePaylines() {
-            let basePatterns = [
-                [1,1,1,1,1], [0,0,0,0,0], [2,2,2,2,2], [3,3,3,3,3],
-                [0,1,2,1,0], [3,2,1,2,3], [0,1,1,1,0], [3,2,2,2,3]
-            ];
-            for(let i=0; i<SABIT_XETT_SAYI; i++) {
-                paylines.push(basePatterns[i % basePatterns.length]);
-            }
-        }
-        generatePaylines();
+        const SETIR_SAYI = 4;
 
         function ceki_uzre_carx_hazirla() {
             let carx_massivi = [];
             for (let [simvol, melumat] of Object.entries(SIMVOLLAR)) {
-                for (let c = 0; c < melumat.ceki; c++) {
-                    carx_massivi.push(simvol);
-                }
+                for (let c = 0; c < melumat.ceki; c++) { carx_massivi.push(simvol); }
             }
             return carx_massivi;
         }
-
         const dolu_carx = ceki_uzre_carx_hazirla();
-        let currentMatrix = [];
 
-        function initReels() {
-            for (let i = 0; i < CARX_SAYI; i++) {
-                const strip = document.getElementById(`strip${i}`);
-                let html = '';
-                let col = [];
-                for (let j = 0; j < SETIR_SAYI; j++) {
-                    let randKey = dolu_carx[Math.floor(Math.random() * dolu_carx.length)];
-                    col.push(randKey);
-                    html += `<div class="symbol" data-col="${i}" data-row="${j}"><img src="${SIMVOLLAR[randKey].img}" alt="${randKey}"></div>`;
-                }
-                currentMatrix[i] = col;
-                strip.innerHTML = html;
-                strip.style.transform = 'translateY(0px)';
+        let balance = 0.00;
+        let playerId = null;
+        let isSpinning = false;
+        let autoSpinActive = false;
+        let autoSpinInterval = null;
+
+        async function handleRegister() {
+            let name = document.getElementById('regNameInput').value.trim();
+            let gmail = document.getElementById('regEmailInput').value.trim();
+            if (!name || !gmail || !gmail.includes('@')) {
+                alert("Zəhmət olmasa ad və düzgün Gmail daxil edin!");
+                return;
             }
+
+            try {
+                let response = await fetch('/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, gmail })
+                });
+                let res = await response.json();
+                if (res.status === 'success') {
+                    playerId = res.playerId;
+                    balance = res.balance;
+                    document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+                    document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
+                    document.getElementById('authModal').style.display = 'none';
+                    setInterval(sendHeartbeat, 3000);
+                } else {
+                    alert(res.message);
+                }
+            } catch (err) {
+                alert("Server xətası baş verdi!");
+            }
+        }
+
+        async function sendHeartbeat() {
+            if (!playerId) return;
+            await fetch('/heartbeat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerId })
+            });
         }
 
         function changeBetStep(amt) {
@@ -396,48 +198,144 @@
             input.value = val.toFixed(2);
         }
 
-        function spinReels() {
-            if (isSpinning) return;
-            let bet = parseFloat(document.getElementById('betInput').value) || 1.00;
-            if (balance < bet) {
-                alert("Balans kifayət etmir! Zəhmət olmasa adminə müraciət edin.");
-                stopAuto();
-                return;
+        function initReels() {
+            for (let i = 0; i < CARX_SAYI; i++) {
+                const strip = document.getElementById(`strip${i}`);
+                let html = '';
+                for (let j = 0; j < SETIR_SAYI; j++) {
+                    let randKey = dolu_carx[Math.floor(Math.random() * dolu_carx.length)];
+                    html += `<div class="symbol"><img src="${SIMVOLLAR[randKey].img}" data-key="${randKey}"></div>`;
+                }
+                strip.innerHTML = html;
+                strip.style.top = '0px';
             }
-            
-            balance -= bet;
-            updateBalanceDisplay();
-            isSpinning = true;
-
-            setTimeout(() => {
-                isSpinning = false;
-                balance += (Math.random() > 0.6 ? bet * 2 : 0); // Sadə simulyasiya uduşu
-                updateBalanceDisplay();
-            }, 800);
         }
 
-        document.getElementById('spinBtn').addEventListener('click', () => { autoInterval ? stopAuto() : spinReels(); });
-        let autoBtn = document.getElementById('autoBtn');
-        autoBtn.addEventListener('click', () => {
-            if (autoInterval) { stopAuto(); } 
-            else {
-                autoBtn.classList.add('active'); autoBtn.innerText = 'STOP';
+        function toggleAutoSpin() {
+            autoSpinActive = !autoSpinActive;
+            let autoBtn = document.getElementById('autoBtn');
+            if (autoSpinActive) {
+                autoBtn.classList.add('active');
+                autoBtn.innerText = "STOP";
                 spinReels();
-                autoInterval = setInterval(() => { spinReels(); }, 1800);
+                autoSpinInterval = setInterval(() => {
+                    if (!autoSpinActive) return;
+                    let bet = parseFloat(document.getElementById('betInput').value) || 1.00;
+                    if (balance < bet) {
+                        toggleAutoSpin();
+                        alert("Balans kifayət etmir!");
+                        return;
+                    }
+                    spinReels();
+                }, 1500);
+            } else {
+                autoBtn.classList.remove('active');
+                autoBtn.innerText = "AUTO";
+                clearInterval(autoSpinInterval);
             }
-        });
-        function stopAuto() { clearInterval(autoInterval); autoInterval = null; autoBtn.classList.remove('active'); autoBtn.innerText = 'AUTO'; }
+        }
 
-        // SƏHİFƏ YÜKLƏNDİKDƏ LOADING EKRANINI BAĞLA
-        window.onload = async function() {
-            initReels();
-            await syncPlayerData();
+        async function spinReels() {
+            if (isSpinning || !playerId) return;
+            let bet = parseFloat(document.getElementById('betInput').value) || 1.00;
+            if (balance < bet) {
+                if (autoSpinActive) toggleAutoSpin();
+                alert("Balans kifayət etmir!");
+                return;
+            }
+
+            balance -= bet;
+            document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+            isSpinning = true;
+            hideWin();
+
+            let gridMatrix = [];
+
+            for (let i = 0; i < CARX_SAYI; i++) {
+                const strip = document.getElementById(`strip${i}`);
+                let html = '';
+                let reelSymbols = [];
+                for (let j = 0; j < 12; j++) {
+                    let randKey = dolu_carx[Math.floor(Math.random() * dolu_carx.length)];
+                    reelSymbols.push(randKey);
+                    html += `<div class="symbol"><img src="${SIMVOLLAR[randKey].img}" data-key="${randKey}"></div>`;
+                }
+                strip.innerHTML = html;
+                
+                let finalSymbols = reelSymbols.slice(reelSymbols.length - SETIR_SAYI);
+                gridMatrix.push(finalSymbols);
+
+                strip.style.transition = 'none';
+                strip.style.top = '0px';
+
+                setTimeout(() => {
+                    let symbolHeight = window.innerWidth >= 768 ? 90 : 60;
+                    let targetTop = -((reelSymbols.length - SETIR_SAYI) * symbolHeight);
+                    strip.style.transition = `top 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)`;
+                    strip.style.top = `${targetTop}px`;
+                }, i * 100);
+            }
+
             setTimeout(() => {
-                let loader = document.getElementById('loadingScreen');
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 500);
-            }, 1000);
-        };
+                let totalWin = calculateWins(gridMatrix, bet);
+                if (totalWin > 0) {
+                    balance += totalWin;
+                    document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+                    showWin(totalWin);
+                }
+                isSpinning = false;
+                syncBalance();
+            }, 700 + (CARX_SAYI * 100));
+        }
+
+        function calculateWins(matrix, bet) {
+            let totalWin = 0;
+            for (let row = 0; row < SETIR_SAYI; row++) {
+                let firstSym = matrix[0][row];
+                let count = 1;
+                for (let col = 1; col < CARX_SAYI; col++) {
+                    let currentSym = matrix[col][row];
+                    if (currentSym === firstSym || currentSym === 'WILD' || firstSym === 'WILD') {
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+                if (count >= 3) {
+                    let targetSym = (firstSym === 'WILD') ? matrix[1][row] : firstSym;
+                    if (SIMVOLLAR[targetSym] && SIMVOLLAR[targetSym].pay[count]) {
+                        totalWin += bet * SIMVOLLAR[targetSym].pay[count];
+                    }
+                }
+            }
+            return totalWin;
+        }
+
+        function showWin(amount) {
+            let winDisplay = document.getElementById('winDisplay');
+            winDisplay.innerText = `UDAÇA! ₼${amount.toFixed(2)}`;
+            winDisplay.style.opacity = '1';
+        }
+
+        function hideWin() {
+            let winDisplay = document.getElementById('winDisplay');
+            winDisplay.style.opacity = '0';
+        }
+
+        async function syncBalance() {
+            let getRes = await fetch('/get_data');
+            let allPlayers = await getRes.json();
+            if(allPlayers[playerId]) {
+                allPlayers[playerId].balance = balance;
+                await fetch('/save_data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(allPlayers)
+                });
+            }
+        }
+
+        window.onload = function() { initReels(); };
     </script>
 </body>
 </html>

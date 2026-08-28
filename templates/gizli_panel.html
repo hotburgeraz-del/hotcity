@@ -18,7 +18,7 @@
         .status-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; }
         .online { background-color: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
         .offline { background-color: #e74c3c; box-shadow: 0 0 8px #e74c3c; }
-        .balance-btn { background: #27ae60; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px; }
+        .balance-btn { background: #27ae60; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 4px; }
         .balance-btn.minus { background: #c0392b; }
         .balance-btn:hover { opacity: 0.8; }
     </style>
@@ -28,7 +28,7 @@
     <h2>HOT CITY - Canlı Oyunçu və İdarəetmə Paneli</h2>
     
     <div class="action-row">
-        <button class="refresh-btn" onclick="loadAdminData()" style="margin-bottom:0;">Siyahını Yenilə</button>
+        <button class="refresh-btn" onclick="loadAdminData()">Siyahını Yenilə</button>
     </div>
 
     <div class="table-container">
@@ -36,14 +36,14 @@
             <thead>
                 <tr>
                     <th>Oyunçu ID</th>
+                    <th>Ad / Gmail</th>
                     <th>Qeydiyyat Kodu (Şifrə)</th>
-                    <th>Aktivlik / Vaxt</th>
+                    <th>Aktivlik / Status</th>
                     <th>Cari Balans</th>
-                    <th>Balansı Dəyiş (+10 / -10 ₼)</th>
+                    <th>Balansı Dəyiş (±5 ₼ / ±10 ₼)</th>
                 </tr>
             </thead>
             <tbody id="adminPlayersList">
-                <!-- Oyunçular bura avtomatik yüklənəcək -->
             </tbody>
         </table>
     </div>
@@ -58,7 +58,7 @@
 
                 let keys = Object.keys(allPlayers);
                 if (keys.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888;">Hələ heç bir oyunçu qeydiyyatdan keçməyib.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">Hələ heç bir oyunçu qeydiyyatdan keçməyib.</td></tr>`;
                     return;
                 }
 
@@ -67,7 +67,7 @@
                 keys.forEach(id => {
                     let p = allPlayers[id];
                     let lastSeen = p.last_active || 0;
-                    let isOnline = (now - lastSeen) < 6000; // Son 6 saniyədə hərəkət edibsə onlayn sayılır
+                    let isOnline = (now - lastSeen) < 5000; 
                     
                     let statusClass = isOnline ? 'online' : 'offline';
                     let statusText = isOnline ? 'Onlayn (Aktiv)' : 'Oflayn';
@@ -76,13 +76,16 @@
                     let tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td><b>${id}</b></td>
+                        <td><b>${p.name || ''}</b><br><small style="color:#aaa;">${p.gmail || ''}</small></td>
                         <td style="color:#ffcc00; font-weight:bold; letter-spacing:1px;">${p.code || ''}</td>
                         <td>
                             <span class="status-dot ${statusClass}"></span>
-                            <b>${statusText}</b> <br><small style="color:#aaa;">Son görünmə: ${timeStr}</small>
+                            <b>${statusText}</b> <br><small style="color:#aaa;">Son: ${timeStr}</small>
                         </td>
                         <td>₼${(parseFloat(p.balance) || 0).toFixed(2)}</td>
                         <td>
+                            <button class="balance-btn" onclick="updateBalance('${id}', 5)">+5 ₼</button>
+                            <button class="balance-btn minus" onclick="updateBalance('${id}', -5)">-5 ₼</button>
                             <button class="balance-btn" onclick="updateBalance('${id}', 10)">+10 ₼</button>
                             <button class="balance-btn minus" onclick="updateBalance('${id}', -10)">-10 ₼</button>
                         </td>
@@ -102,7 +105,7 @@
                 if (allPlayers[playerId]) {
                     let currentBal = parseFloat(allPlayers[playerId].balance) || 0;
                     let newBal = currentBal + amount;
-                    if (newBal < 0) newBal = 0; // Balans mənfi ola bilməz
+                    if (newBal < 0) newBal = 0;
                     allPlayers[playerId].balance = newBal;
 
                     await fetch('/save_data', {
@@ -118,7 +121,6 @@
             }
         }
 
-        // Hər 2 saniyədən bir avtomatik yenilə
         window.onload = loadAdminData;
         setInterval(loadAdminData, 2000);
     </script>
