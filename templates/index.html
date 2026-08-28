@@ -22,6 +22,11 @@
         .top-bar { width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; }
         .balance-box { font-size: 13px; color: #ddd; display: flex; align-items: center; gap: 8px; }
         .balance-box span { font-weight: bold; color: #fff; font-size: 14px; }
+        
+        /* Pul çıxar düyməsi */
+        .withdraw-btn { background: #27ae60; color: #fff; border: none; padding: 5px 10px; font-size: 11px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-left: 8px; transition: 0.2s; }
+        .withdraw-btn:hover { background: #2ecc71; }
+
         .logo { font-weight: 900; font-style: italic; color: #ff3300; text-shadow: 0 0 10px #ff0000; letter-spacing: 2px; }
         .logo span { color: #ffcc00; }
         .slot-wrapper { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; flex-grow: 1; }
@@ -74,6 +79,7 @@
         .modal-content h3 { color: #ffcc00; margin-bottom: 10px; }
         .modal-content input { width: 100%; padding: 10px; margin: 10px 0; background: #000; border: 1px solid #ff6600; color: #fff; border-radius: 5px; font-size: 16px; text-align: center; outline: none; }
         .modal-btn { background: #ff3300; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 5px; }
+        .modal-close-btn { background: #444; margin-top: 8px; }
         
         .auth-tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid #ff3300; }
         .tab-btn { flex: 1; background: transparent; border: none; color: #aaa; padding: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
@@ -94,6 +100,7 @@
 </head>
 <body>
 
+    <!-- Qeydiyyat və Giriş Modalı -->
     <div class="modal" id="authModal">
         <div class="modal-content">
             <div class="auth-tabs">
@@ -101,7 +108,6 @@
                 <button class="tab-btn" id="loginTabBtn" onclick="switchAuthMode('login')">Giriş</button>
             </div>
             
-            <!-- Qeydiyyat Formu -->
             <div id="registerForm">
                 <h3>HOT CITY Qeydiyyat</h3>
                 <p style="font-size:12px; color:#aaa; margin-top:5px;">Yeni hesab yaratmaq üçün məlumatları daxil edin:</p>
@@ -110,7 +116,6 @@
                 <button class="modal-btn" onclick="handleRegister()">Qeydiyyatdan Keç</button>
             </div>
 
-            <!-- Giriş Formu (Gmail + ID) -->
             <div id="loginForm" style="display: none;">
                 <h3>HOT CITY Giriş</h3>
                 <p style="font-size:12px; color:#aaa; margin-top:5px;">Gmail və ID nömrənizi daxil edin:</p>
@@ -121,9 +126,21 @@
         </div>
     </div>
 
+    <!-- Pul Çıxarma Modalı -->
+    <div class="modal" id="withdrawModal" style="display: none;">
+        <div class="modal-content">
+            <h3>Pul Çıxar</h3>
+            <p style="font-size:12px; color:#aaa; margin-top:5px;">Çıxarmaq istədiyiniz məbləği daxil edin:</p>
+            <input type="number" id="withdrawInput" placeholder="Məbləğ (₼)..." min="1.00" step="1.00">
+            <button class="modal-btn" onclick="handleWithdraw()">Təsdiq Et</button>
+            <button class="modal-btn modal-close-btn" onclick="closeWithdrawModal()">Bağla</button>
+        </div>
+    </div>
+
     <div class="top-bar">
         <div class="balance-box">
             <div>BALANCE<br><span id="balance">₼0.00</span></div>
+            <button class="withdraw-btn" onclick="openWithdrawModal()">ÇIXAR</button>
         </div>
         <div class="logo">HOT <span>CITY</span></div>
         <div id="playerIdDisplay" style="font-size: 10px; color: #ffcc00;">ID: -</div>
@@ -216,6 +233,33 @@
                 document.getElementById('loginTabBtn').classList.add('active');
                 document.getElementById('regTabBtn').classList.remove('active');
             }
+        }
+
+        function openWithdrawModal() {
+            if (!playerId) return;
+            document.getElementById('withdrawModal').style.display = 'flex';
+        }
+
+        function closeWithdrawModal() {
+            document.getElementById('withdrawModal').style.display = 'none';
+        }
+
+        async function handleWithdraw() {
+            let amount = parseFloat(document.getElementById('withdrawInput').value);
+            if (!amount || amount <= 0) {
+                alert("Zəhmət olmasa düzgün məbləğ daxil edin!");
+                return;
+            }
+            if (amount > balance) {
+                alert("Balansınızda kifayət qədər vəsait yoxdur!");
+                return;
+            }
+
+            balance -= amount;
+            document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+            closeWithdrawModal();
+            alert(`₼${amount.toFixed(2)} çıxarılması üçün sorğu göndərildi!`);
+            await syncBalance();
         }
 
         async function handleRegister() {
@@ -412,24 +456,31 @@
             let lineBet = totalBet / PAYLINES.length;
 
             PAYLINES.forEach(line => {
-                let firstColSym = matrix[0][line[0]];
-                let matchSym = firstColSym === 'WILD' ? null : firstColSym;
-                let count = 1;
-                let currentCoords = [[0, line[0]]];
+                let matchSym = null;
+                let count = 0;
+                let currentCoords = [];
 
-                for (let col = 1; col < CARX_SAYI; col++) {
+                for (let col = 0; col < CARX_SAYI; col++) {
                     let sym = matrix[col][line[col]];
-                    if (matchSym === null && sym !== 'WILD') {
-                        matchSym = sym;
+
+                    if (matchSym === null) {
+                        if (sym !== 'WILD') {
+                            matchSym = sym;
+                        }
                     }
 
-                    if (sym === matchSym || sym === 'WILD') {
+                    if (matchSym === null || sym === matchSym || sym === 'WILD') {
                         count++;
                         currentCoords.push([col, line[col]]);
+                        if (matchSym === null && sym === 'WILD' && col === CARX_SAYI - 1) {
+                            matchSym = 'LUCKY_7'; 
+                        }
                     } else {
                         break;
                     }
                 }
+
+                if (matchSym === null) matchSym = 'LUCKY_7';
 
                 if (count >= 3 && matchSym && SIMVOLLAR[matchSym] && SIMVOLLAR[matchSym].pay[count]) {
                     let lineWin = lineBet * SIMVOLLAR[matchSym].pay[count];
