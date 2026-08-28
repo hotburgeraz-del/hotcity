@@ -54,22 +54,6 @@
             opacity: 1; 
         }
 
-        /* Soldan sağa bütün carxları kəsib keçən tam parlaq xətt */
-        .slot-container::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: #ff0000;
-            box-shadow: 0 0 12px #ff3300, 0 0 6px #fff;
-            transform: translateY(-50%);
-            z-index: 15;
-            pointer-events: none;
-            border-radius: 2px;
-        }
-
         @media (min-width: 768px) {
             .logo { font-size: 26px; }
             .slot-container { width: 750px; }
@@ -94,6 +78,10 @@
         .modal-content input { width: 100%; padding: 10px; margin: 10px 0; background: #000; border: 1px solid #ff6600; color: #fff; border-radius: 5px; font-size: 16px; text-align: center; outline: none; }
         .modal-btn { background: #ff3300; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 5px; }
         
+        .auth-tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid #ff3300; }
+        .tab-btn { flex: 1; background: transparent; border: none; color: #aaa; padding: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .tab-btn.active { color: #ffcc00; border-bottom: 2px solid #ffcc00; }
+
         .bottom-bar { width: 100%; max-width: 900px; background: rgba(20, 0, 0, 0.95); border-top: 2px solid #661100; display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; border-radius: 8px; }
         .control-group { display: flex; background: #1a0000; border: 1px solid #661100; border-radius: 20px; padding: 0 5px; align-items: center; }
         .control-item { padding: 4px 8px; display: flex; flex-direction: column; align-items: center; }
@@ -111,11 +99,27 @@
 
     <div class="modal" id="authModal">
         <div class="modal-content">
-            <h3>HOT CITY Qeydiyyat</h3>
-            <p style="font-size:12px; color:#aaa; margin-top:5px;">Oyuna başlamaq üçün ad və gmail daxil edin:</p>
-            <input type="text" id="regNameInput" placeholder="Adınız...">
-            <input type="email" id="regEmailInput" placeholder="Gmail ünvanınız...">
-            <button class="modal-btn" onclick="handleRegister()">Oyuna Başla</button>
+            <div class="auth-tabs">
+                <button class="tab-btn active" id="regTabBtn" onclick="switchAuthMode('register')">Qeydiyyat</button>
+                <button class="tab-btn" id="loginTabBtn" onclick="switchAuthMode('login')">Giriş</button>
+            </div>
+            
+            <!-- Qeydiyyat Formu -->
+            <div id="registerForm">
+                <h3>HOT CITY Qeydiyyat</h3>
+                <p style="font-size:12px; color:#aaa; margin-top:5px;">Yeni hesab yaratmaq üçün məlumatları daxil edin:</p>
+                <input type="text" id="regNameInput" placeholder="Adınız...">
+                <input type="email" id="regEmailInput" placeholder="Gmail ünvanınız...">
+                <button class="modal-btn" onclick="handleRegister()">Qeydiyyatdan Keç</button>
+            </div>
+
+            <!-- Giriş Formu -->
+            <div id="loginForm" style="display: none;">
+                <h3>HOT CITY Giriş</h3>
+                <p style="font-size:12px; color:#aaa; margin-top:5px;">Hesabınıza daxil olmaq üçün gmail yazın:</p>
+                <input type="email" id="loginEmailInput" placeholder="Gmail ünvanınız...">
+                <button class="modal-btn" onclick="handleLogin()">Giriş Et</button>
+            </div>
         </div>
     </div>
 
@@ -129,6 +133,9 @@
 
     <div class="slot-wrapper">
         <div class="slot-container" id="slotContainer">
+            <!-- Uduş xətlərini vizual çəkmək üçün SVG -->
+            <svg id="winLinesSvg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;"></svg>
+            
             <div class="reel" id="reel0"><div class="reel-strip" id="strip0"></div></div>
             <div class="reel" id="reel1"><div class="reel-strip" id="strip1"></div></div>
             <div class="reel" id="reel2"><div class="reel-strip" id="strip2"></div></div>
@@ -201,6 +208,20 @@
         }
         const PAYLINES = generate100Paylines();
 
+        function switchAuthMode(mode) {
+            if (mode === 'register') {
+                document.getElementById('registerForm').style.display = 'block';
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('regTabBtn').classList.add('active');
+                document.getElementById('loginTabBtn').classList.remove('active');
+            } else {
+                document.getElementById('registerForm').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('loginTabBtn').classList.add('active');
+                document.getElementById('regTabBtn').classList.remove('active');
+            }
+        }
+
         async function handleRegister() {
             let name = document.getElementById('regNameInput').value.trim();
             let gmail = document.getElementById('regEmailInput').value.trim();
@@ -225,6 +246,35 @@
                     setInterval(sendHeartbeat, 3000);
                 } else {
                     alert(res.message);
+                }
+            } catch (err) {
+                alert("Server xətası baş verdi!");
+            }
+        }
+
+        async function handleLogin() {
+            let gmail = document.getElementById('loginEmailInput').value.trim();
+            if (!gmail || !gmail.includes('@')) {
+                alert("Zəhmət olmasa düzgün Gmail daxil edin!");
+                return;
+            }
+
+            try {
+                let response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ gmail })
+                });
+                let res = await response.json();
+                if (res.status === 'success') {
+                    playerId = res.playerId;
+                    balance = res.balance;
+                    document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+                    document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
+                    document.getElementById('authModal').style.display = 'none';
+                    setInterval(sendHeartbeat, 3000);
+                } else {
+                    alert(res.message || "Bu gmail ilə qeydiyyat tapılmadı!");
                 }
             } catch (err) {
                 alert("Server xətası baş verdi!");
@@ -299,6 +349,7 @@
             isSpinning = true;
             hideWin();
             clearWinningSymbols();
+            clearWinLines();
 
             let gridMatrix = [];
 
@@ -335,6 +386,7 @@
                     balance += winData.totalWin;
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                     highlightWinningSymbols(winData.winningCoords);
+                    drawWinningLines(winData.winningLines);
                     showWin(winData.totalWin, winData.isBigWin);
                 }
                 isSpinning = false;
@@ -359,6 +411,7 @@
         function calculate100LinesWin(matrix, totalBet) {
             let totalWin = 0;
             let winningCoords = new Set();
+            let winningLines = [];
             let lineBet = totalBet / PAYLINES.length;
 
             PAYLINES.forEach(line => {
@@ -384,12 +437,13 @@
                 if (count >= 3 && matchSym && SIMVOLLAR[matchSym] && SIMVOLLAR[matchSym].pay[count]) {
                     let lineWin = lineBet * SIMVOLLAR[matchSym].pay[count];
                     totalWin += lineWin;
+                    winningLines.push(currentCoords);
                     currentCoords.forEach(coord => winningCoords.add(`${coord[0]}-${coord[1]}`));
                 }
             });
 
             let isBigWin = totalWin >= (totalBet * 10);
-            return { totalWin, winningCoords, isBigWin };
+            return { totalWin, winningCoords, winningLines, isBigWin };
         }
 
         function highlightWinningSymbols(coordsSet) {
@@ -405,8 +459,49 @@
             });
         }
 
+        function drawWinningLines(lines) {
+            const svg = document.getElementById('winLinesSvg');
+            svg.innerHTML = '';
+            const container = document.getElementById('slotContainer');
+            const rect = container.getBoundingClientRect();
+            
+            lines.forEach(lineCoords => {
+                let points = [];
+                lineCoords.forEach(coord => {
+                    let col = coord[0];
+                    let row = coord[1];
+                    const strip = document.getElementById(`strip${col}`);
+                    if (strip) {
+                        let symbolDivs = strip.getElementsByClassName('symbol');
+                        if (symbolDivs[row]) {
+                            let sRect = symbolDivs[row].getBoundingClientRect();
+                            let x = (sRect.left + sRect.width / 2) - rect.left;
+                            let y = (sRect.top + sRect.height / 2) - rect.top;
+                            points.push(`${x},${y}`);
+                        }
+                    }
+                });
+
+                if (points.length > 1) {
+                    let polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+                    polyline.setAttribute('points', points.join(' '));
+                    polyline.setAttribute('stroke', '#ffcc00');
+                    polyline.setAttribute('stroke-width', '4');
+                    polyline.setAttribute('fill', 'none');
+                    polyline.setAttribute('stroke-linecap', 'round');
+                    polyline.setAttribute('stroke-linejoin', 'round');
+                    polyline.style.filter = 'drop-shadow(0 0 8px #ff3300)';
+                    svg.appendChild(polyline);
+                }
+            });
+        }
+
         function clearWinningSymbols() {
             document.querySelectorAll('.symbol').forEach(el => el.classList.remove('winning'));
+        }
+
+        function clearWinLines() {
+            document.getElementById('winLinesSvg').innerHTML = '';
         }
 
         function showWin(amount, isBigWin) {
