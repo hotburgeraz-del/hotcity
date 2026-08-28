@@ -24,9 +24,10 @@ def save_data(data):
 def index():
     return render_template('index.html')
 
+# Admin paneli üçün gizli_panel.html faylını birləşdirdik
 @app.route('/admin')
 def admin_panel():
-    return render_template('admin.html')
+    return render_template('gizli_panel.html')
 
 @app.route('/get_data', methods=['GET'])
 def get_data():
