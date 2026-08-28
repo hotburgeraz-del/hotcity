@@ -24,7 +24,6 @@ def save_data(data):
 def index():
     return render_template('index.html')
 
-# Admin paneli üçün gizli_panel.html faylını birləşdirdik
 @app.route('/admin')
 def admin_panel():
     return render_template('gizli_panel.html')
@@ -50,16 +49,12 @@ def auth():
 
     players = load_data()
 
+    # Eyni gmail artıq qeydiyyatdan keçibsə, yeni hesab yaratmağa icazə vermirik
     for p_id, p_info in players.items():
         if p_info.get('gmail') == gmail:
-            p_info['last_active'] = int(time.time() * 1000)
-            p_info['name'] = name
-            save_data(players)
             return jsonify({
-                "status": "success",
-                "playerId": p_id,
-                "balance": p_info['balance'],
-                "code": p_info.get('code', '')
+                "status": "error", 
+                "message": "Bu Gmail artıq qeydiyyatdan keçib! Zəhmət olmasa Giriş panelindən daxil olun."
             })
 
     player_id = f"HOT_{random.randint(1000, 9999)}"
@@ -83,6 +78,28 @@ def auth():
         "balance": 10.00,
         "code": secret_code
     })
+
+@app.route('/login', methods=['POST'])
+def login():
+    req = request.json
+    gmail = req.get('gmail', '').strip()
+    player_id = req.get('playerId', '').strip()
+
+    if not gmail or not player_id:
+        return jsonify({"status": "error", "message": "Gmail və ID daxil edilməlidir!"})
+
+    players = load_data()
+
+    if player_id in players and players[player_id].get('gmail') == gmail:
+        players[player_id]['last_active'] = int(time.time() * 1000)
+        save_data(players)
+        return jsonify({
+            "status": "success",
+            "playerId": player_id,
+            "balance": players[player_id]['balance']
+        })
+    
+    return jsonify({"status": "error", "message": "Daxil edilən Gmail və ya ID səhvdir!"})
 
 @app.route('/heartbeat', methods=['POST'])
 def heartbeat():
