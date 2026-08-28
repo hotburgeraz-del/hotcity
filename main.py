@@ -1,12 +1,50 @@
 from flask import Flask, render_template, request, jsonify
-import sqlite3
 import os
 import random
 import time
 import requests
+import psycopg2
+from urllib.parse import urlparse
 
 app = Flask(__name__)
-DB_FILE = "players.db"
+
+# --- XARİCİ BULUD BAZASI (SUPABASE / POSTGRESQL) ---
+# Render-də və ya xarici serverdə 'DATABASE_URL' environment variable kimi təyin olunur
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://user:password@your-external-cloud-db.com:5432/dbname")
+
+def get_db_connection():
+    url = urlparse(DATABASE_URL)
+    conn = psycopg2.connect(
+        database=url.path[1:],
+        user=url.username,
+        password=url.password,
+        host=url.hostname,
+        port=url.port
+    )
+    return conn
+
+def init_db():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS players (
+                player_id VARCHAR(50) PRIMARY KEY,
+                name VARCHAR(100),
+                gmail VARCHAR(150) UNIQUE,
+                balance REAL,
+                code VARCHAR(50),
+                online INTEGER,
+                last_active BIGINT
+            )
+        ''')
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        print("Bulud bazasına qoşulma xətası:", e)
+
+init_db()
 
 # --- TELEGRAM BOT MƏLUMATLARI ---
 TELEGRAM_TOKEN = "8502614066:AAFsPtOOY5RS5y1SNRs_Oir1sBXCgkl4fyY"
@@ -24,26 +62,6 @@ def send_telegram_message(message):
     except Exception as e:
         print("Telegram xətası:", e)
 
-def init_db():
-    """Verilənlər bazasını və cədvəli yaradır"""
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS players (
-            player_id TEXT PRIMARY KEY,
-            name TEXT,
-            gmail TEXT UNIQUE,
-            balance REAL,
-            code TEXT,
-            online INTEGER,
-            last_active INTEGER
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
-init_db()
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -54,42 +72,49 @@ def admin_panel():
 
 @app.route('/get_data', methods=['GET'])
 def get_data():
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM players")
-    rows = cursor.fetchall()
-    conn.close()
-    
-    players_dict = {}
-    for row in rows:
-        players_dict[row['player_id']] = {
-            "name": row['name'],
-            "gmail": row['gmail'],
-            "balance": row['balance'],
-            "code": row['code'],
-            "online": bool(row['online']),
-            "last_active": row['last_active']
-        }
-    return jsonify(players_dict)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT player_id, name, gmail, balance, code, online, last_active FROM players")
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        players_dict = {}
+        for row in rows:
+            players_dict[row[0]] = {
+                "name": row[1],
+                "gmail": row[2],
+                "balance": row[3],
+                "code": row[4],
+                "online": bool(row[5]),
+                "last_active": row[6]
+            }
+        return jsonify(players_dict)
+    except Exception as e:
+        return jsonify({})
 
 @app.route('/save_data', methods=['POST'])
 def save_data_route():
     data = request.json
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    for p_id, info in data.items():
-        cursor.execute('''
-            INSERT INTO players (player_id, name, gmail, balance, code, online, last_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(player_id) DO UPDATE SET
-                balance=excluded.balance,
-                online=excluded.online,
-                last_active=excluded.last_active
-        ''', (p_id, info.get('name'), info.get('gmail'), info.get('balance', 0.0), info.get('code'), int(info.get('online', True)), info.get('last_active', int(time.time() * 1000))))
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "success"})
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        for p_id, info in data.items():
+            cursor.execute('''
+                INSERT INTO players (player_id, name, gmail, balance, code, online, last_active)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (player_id) DO UPDATE SET
+                    balance = EXCLUDED.balance,
+                    online = EXCLUDED.online,
+                    last_active = EXCLUDED.last_active
+            ''', (p_id, info.get('name'), info.get('gmail'), info.get('balance', 0.0), info.get('code'), int(info.get('online', True)), info.get('last_active', int(time.time() * 1000))))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 @app.route('/auth', methods=['POST'])
 def auth():
@@ -100,53 +125,55 @@ def auth():
     if not gmail or '@' not in gmail:
         return jsonify({"status": "error", "message": "Zəhmət olmasa etibarlı Gmail daxil edin!"})
 
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    
-    # Gmail-in əvvəlcədən qeydiyyatda olub-olmamasını yoxlayırıq
-    cursor.execute("SELECT * FROM players WHERE gmail = ?", (gmail,))
-    existing = cursor.fetchone()
-    
-    if existing:
-        conn.close()
-        return jsonify({
-            "status": "error", 
-            "message": "Bu Gmail artıq qeydiyyatdan keçib! Zəhmət olmasa Giriş panelindən daxil olun."
-        })
-
-    player_id = f"HOT_{random.randint(1000, 9999)}"
-    cursor.execute("SELECT * FROM players WHERE player_id = ?", (player_id,))
-    while cursor.fetchone():
-        player_id = f"HOT_{random.randint(1000, 9999)}"
-        cursor.execute("SELECT * FROM players WHERE player_id = ?", (player_id,))
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         
-    secret_code = f"PASS{random.randint(100, 999)}"
-    now = int(time.time() * 1000)
+        cursor.execute("SELECT player_id FROM players WHERE gmail = %s", (gmail,))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({
+                "status": "error", 
+                "message": "Bu Gmail artıq qeydiyyatdan keçib! Zəhmət olmasa Giriş panelindən daxil olun."
+            })
 
-    cursor.execute('''
-        INSERT INTO players (player_id, name, gmail, balance, code, online, last_active)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (player_id, name, gmail, 0.00, secret_code, 1, now))
-    
-    conn.commit()
-    conn.close()
+        player_id = f"HOT_{random.randint(1000, 9999)}"
+        cursor.execute("SELECT player_id FROM players WHERE player_id = %s", (player_id,))
+        while cursor.fetchone():
+            player_id = f"HOT_{random.randint(1000, 9999)}"
+            cursor.execute("SELECT player_id FROM players WHERE player_id = %s", (player_id,))
+            
+        secret_code = f"PASS{random.randint(100, 999)}"
+        now = int(time.time() * 1000)
 
-    msg = (
-        f"🚨 **Yeni Qeydiyyat!**\n\n"
-        f"👤 **Ad:** {name}\n"
-        f"📧 **Gmail:** {gmail}\n"
-        f"🆔 **ID:** `{player_id}`\n"
-        f"🔑 **Şifrə:** `{secret_code}`\n"
-        f"💰 **Balans:** 0.00 ₼"
-    )
-    send_telegram_message(msg)
+        cursor.execute('''
+            INSERT INTO players (player_id, name, gmail, balance, code, online, last_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        ''', (player_id, name, gmail, 0.00, secret_code, 1, now))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
 
-    return jsonify({
-        "status": "success",
-        "playerId": player_id,
-        "balance": 0.00,
-        "code": secret_code
-    })
+        msg = (
+            f"🚨 **Yeni Qeydiyyat (Xarici Bulud Baza)!**\n\n"
+            f"👤 **Ad:** {name}\n"
+            f"📧 **Gmail:** {gmail}\n"
+            f"🆔 **ID:** `{player_id}`\n"
+            f"🔑 **Şifrə:** `{secret_code}`\n"
+            f"💰 **Balans:** 0.00 ₼"
+        )
+        send_telegram_message(msg)
+
+        return jsonify({
+            "status": "success",
+            "playerId": player_id,
+            "balance": 0.00,
+            "code": secret_code
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -157,35 +184,39 @@ def login():
     if not gmail or not player_id:
         return jsonify({"status": "error", "message": "Gmail və ID daxil edilməlidir!"})
 
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT * FROM players WHERE player_id = ? AND gmail = ?", (player_id, gmail))
-    user = cursor.fetchone()
-
-    if user:
-        now = int(time.time() * 1000)
-        cursor.execute("UPDATE players SET online = 1, last_active = ? WHERE player_id = ?", (now, player_id))
-        conn.commit()
-        conn.close()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         
-        msg = (
-            f"🟢 **Oyunçu Giriş etdi!**\n\n"
-            f"👤 **Ad:** {user['name']}\n"
-            f"🆔 **ID:** `{player_id}`\n"
-            f"📧 **Gmail:** {gmail}"
-        )
-        send_telegram_message(msg)
+        cursor.execute("SELECT name, balance FROM players WHERE player_id = %s AND gmail = %s", (player_id, gmail))
+        user = cursor.fetchone()
 
-        return jsonify({
-            "status": "success",
-            "playerId": player_id,
-            "balance": user['balance']
-        })
-    
-    conn.close()
-    return jsonify({"status": "error", "message": "Daxil edilən Gmail və ya ID səhvdir!"})
+        if user:
+            now = int(time.time() * 1000)
+            cursor.execute("UPDATE players SET online = 1, last_active = %s WHERE player_id = %s", (now, player_id))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            msg = (
+                f"🟢 **Oyunçu Giriş etdi!**\n\n"
+                f"👤 **Ad:** {user[0]}\n"
+                f"🆔 **ID:** `{player_id}`\n"
+                f"📧 **Gmail:** {gmail}"
+            )
+            send_telegram_message(msg)
+
+            return jsonify({
+                "status": "success",
+                "playerId": player_id,
+                "balance": user[1]
+            })
+        
+        cursor.close()
+        conn.close()
+        return jsonify({"status": "error", "message": "Daxil edilən Gmail və ya ID səhvdir!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 @app.route('/withdraw', methods=['POST'])
 def withdraw():
@@ -198,24 +229,28 @@ def withdraw():
     if not player_id or not amount or not gmail or not card_code:
         return jsonify({"status": "error", "message": "Bütün məlumatlar doldurulmalıdır!"})
 
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM players WHERE player_id = ?", (player_id,))
-    user = cursor.fetchone()
-    conn.close()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT player_id FROM players WHERE player_id = %s", (player_id,))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
 
-    if user:
-        msg = (
-            f"💸 **Pul Çıxarma Sorğusu!**\n\n"
-            f"🆔 **ID:** `{player_id}`\n"
-            f"📧 **Gmail:** {gmail}\n"
-            f"💳 **Kart Kodu:** `{card_code}`\n"
-            f"💰 **Məbləğ:** `{amount} ₼`"
-        )
-        send_telegram_message(msg)
-        return jsonify({"status": "success"})
-    
-    return jsonify({"status": "error", "message": "Oyunçu tapılmadı!"})
+        if user:
+            msg = (
+                f"💸 **Pul Çıxarma Sorğusu!**\n\n"
+                f"🆔 **ID:** `{player_id}`\n"
+                f"📧 **Gmail:** {gmail}\n"
+                f"💳 **Kart Kodu:** `{card_code}`\n"
+                f"💰 **Məbləğ:** `{amount} ₼`"
+            )
+            send_telegram_message(msg)
+            return jsonify({"status": "success"})
+        
+        return jsonify({"status": "error", "message": "Oyunçu tapılmadı!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 @app.route('/heartbeat', methods=['POST'])
 def heartbeat():
@@ -224,13 +259,17 @@ def heartbeat():
     if not player_id:
         return jsonify({"status": "error"})
     
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    now = int(time.time() * 1000)
-    cursor.execute("UPDATE players SET online = 1, last_active = ? WHERE player_id = ?", (now, player_id))
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "success"})
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        now = int(time.time() * 1000)
+        cursor.execute("UPDATE players SET online = 1, last_active = %s WHERE player_id = %s", (now, player_id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception:
+        return jsonify({"status": "error"})
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
