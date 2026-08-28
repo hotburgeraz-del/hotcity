@@ -209,23 +209,22 @@
         let autoSpinActive = false;
         let autoSpinInterval = null;
 
-        function generate100Paylines() {
-            let lines = [];
-            let basePatterns = [
-                [1,1,1,1,1], [0,0,0,0,0], [2,2,2,2,2], [3,3,3,3,3],
-                [0,1,2,1,0], [3,2,1,2,3], [1,2,1,2,1], [2,1,2,1,2],
-                [0,1,0,1,0], [3,2,3,2,3], [1,0,1,0,1], [2,3,2,3,2],
-                [0,0,1,0,0], [3,3,2,3,3], [1,1,2,1,1], [2,2,1,2,2]
+        // Xətlər təmizləndi və məntiqli 10 ədəd düz/diaqonal xəttə endirildi
+        function generateCleanPaylines() {
+            return [
+                [0, 0, 0, 0, 0], // Üstdən düz
+                [1, 1, 1, 1, 1], // Orta-üst düz
+                [2, 2, 2, 2, 2], // Orta-alt düz
+                [3, 3, 3, 3, 3], // Alt düz
+                [0, 1, 2, 1, 0], // V şəkilli diaqonal
+                [3, 2, 1, 2, 3], // Ters V şəkilli diaqonal
+                [0, 1, 1, 1, 0], // Yuxarı əyilən
+                [3, 2, 2, 2, 3], // Aşağı əyilən
+                [1, 0, 0, 0, 1], // Yuxarıdan enən
+                [2, 3, 3, 3, 2]  // Aşağıdan qalxan
             ];
-            for (let i = 0; i < 100; i++) {
-                let p = basePatterns[i % basePatterns.length].map((val, idx) => {
-                    return (val + Math.floor(i / basePatterns.length)) % SETIR_SAYI;
-                });
-                lines.push(p);
-            }
-            return lines;
         }
-        const PAYLINES = generate100Paylines();
+        const PAYLINES = generateCleanPaylines();
 
         function switchAuthMode(mode) {
             if (mode === 'register') {
@@ -252,7 +251,6 @@
         }
 
         function handleLogout() {
-            // Çıxış düyməsinə basıldıqda localStorage təmizlənir və hesabdan çıxılır
             localStorage.removeItem('hotcity_playerId');
             localStorage.removeItem('hotcity_userEmail');
 
@@ -328,7 +326,6 @@
                     userEmail = gmail;
                     balance = res.balance;
 
-                    // Məlumatları yaddaşda saxla ki, F5 zamanı silinməsin
                     localStorage.setItem('hotcity_playerId', playerId);
                     localStorage.setItem('hotcity_userEmail', userEmail);
 
@@ -364,7 +361,6 @@
                     userEmail = gmail;
                     balance = res.balance;
 
-                    // Məlumatları yaddaşda saxla ki, F5 zamanı silinməsin
                     localStorage.setItem('hotcity_playerId', playerId);
                     localStorage.setItem('hotcity_userEmail', userEmail);
 
@@ -380,7 +376,6 @@
             }
         }
 
-        // Səhifə açıldıqda əgər əvvəlcədən daxil olunubsa, avtomatik bərpa et
         async function checkSavedSession() {
             let savedId = localStorage.getItem('hotcity_playerId');
             let savedEmail = localStorage.getItem('hotcity_userEmail');
@@ -510,7 +505,7 @@
             setTimeout(() => {
                 updateDOMGrid(gridMatrix);
 
-                let winData = calculate100LinesWin(gridMatrix, bet);
+                let winData = calculateLinesWin(gridMatrix, bet);
                 if (winData.totalWin > 0) {
                     balance += winData.totalWin;
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
@@ -537,7 +532,7 @@
             }
         }
 
-        function calculate100LinesWin(matrix, totalBet) {
+        function calculateLinesWin(matrix, totalBet) {
             let totalWin = 0;
             let winningCoords = new Set();
             let winningLines = [];
@@ -670,7 +665,7 @@
 
         window.onload = function() { 
             initReels(); 
-            checkSavedSession(); // Səhifə yüklənəndə yaddaşdakı sessiyanı yoxla
+            checkSavedSession();
         };
     </script>
 </body>
