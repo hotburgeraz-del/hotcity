@@ -68,6 +68,7 @@ def auth():
 
     players = load_data()
 
+    # Təkrar qeydiyyatın qarşısının alınması
     for p_id, p_info in players.items():
         if p_info.get('gmail') == gmail:
             return jsonify({
@@ -81,11 +82,13 @@ def auth():
         
     secret_code = f"PASS{random.randint(100, 999)}"
 
+    # Başlanğıc balans 0.00 olaraq təyin edildi
     players[player_id] = {
         "name": name,
         "gmail": gmail,
-        "balance": 10.00,
+        "balance": 0.00,
         "code": secret_code,
+        "online": True,
         "last_active": int(time.time() * 1000)
     }
     save_data(players)
@@ -97,14 +100,14 @@ def auth():
         f"📧 **Gmail:** {gmail}\n"
         f"🆔 **ID:** `{player_id}`\n"
         f"🔑 **Şifrə:** `{secret_code}`\n"
-        f"💰 **Balans:** 10.00 ₼"
+        f"💰 **Balans:** 0.00 ₼"
     )
     send_telegram_message(msg)
 
     return jsonify({
         "status": "success",
         "playerId": player_id,
-        "balance": 10.00,
+        "balance": 0.00,
         "code": secret_code
     })
 
@@ -120,6 +123,7 @@ def login():
     players = load_data()
 
     if player_id in players and players[player_id].get('gmail') == gmail:
+        players[player_id]['online'] = True
         players[player_id]['last_active'] = int(time.time() * 1000)
         save_data(players)
         
@@ -175,6 +179,7 @@ def heartbeat():
     
     players = load_data()
     if player_id in players:
+        players[player_id]['online'] = True
         players[player_id]['last_active'] = int(time.time() * 1000)
         save_data(players)
         return jsonify({"status": "success"})
