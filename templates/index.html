@@ -46,14 +46,15 @@
         .reel { background: #1a0000; border: 2px solid #ff6600; border-radius: 6px; overflow: hidden; position: relative; }
         .reel-strip { position: absolute; top: 0; width: 100%; display: flex; flex-direction: column; will-change: top; }
         .symbol { display: flex; justify-content: center; align-items: center; position: relative; z-index: 2; user-select: none; }
-        .symbol img { object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7)); transition: transform 0.3s, filter 0.3s; }
+        .symbol img { object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7)); transition: transform 0.2s, filter 0.2s; }
         
-        @keyframes pulseSymbol { 
-            0% { transform: scale(1); filter: brightness(1); } 
-            50% { transform: scale(1.22); filter: brightness(1.6) drop-shadow(0 0 8px #ffcc00); } 
-            100% { transform: scale(1); filter: brightness(1); } 
+        /* Hell Hot Stili: Qazanan simvollar böyüyüb-kiçilir və yanıb-sönür */
+        @keyframes hellHotPulse { 
+            0% { transform: scale(1); filter: brightness(1) drop-shadow(0 0 2px #ff3300); } 
+            50% { transform: scale(1.22); filter: brightness(1.7) drop-shadow(0 0 15px #ffcc00); } 
+            100% { transform: scale(1); filter: brightness(1) drop-shadow(0 0 2px #ff3300); } 
         }
-        .symbol.winning img { animation: pulseSymbol 0.5s infinite ease-in-out; z-index: 20; }
+        .symbol.winning img { animation: hellHotPulse 0.55s infinite ease-in-out; z-index: 20; }
 
         @media (min-width: 768px) {
             .logo { font-size: 26px; }
@@ -177,7 +178,6 @@
     </div>
 
     <script>
-        // Mərc addımları: 0.50-dən başlayaraq +0.50 artır
         const BET_STEPS = [];
         for (let b = 0.50; b <= 100.00; b += 0.50) {
             BET_STEPS.push(parseFloat(b.toFixed(2)));
@@ -381,7 +381,6 @@
                 gridMatrix.push(finalSymbols);
 
                 strip.style.transition = 'none'; strip.style.top = '0px';
-                // Sıfır gecikmə və yüksək sürət ilə zərrə qədər donma yaratmadan fırlanma
                 requestAnimationFrame(() => {
                     setTimeout(() => {
                         let symbolHeight = window.innerWidth >= 768 ? 90 : 60;
@@ -428,7 +427,6 @@
                 }
             });
             
-            // İstəyinə əsasən ümumi qazanılan məbləğ avtomatik hesablanaraq 20% azaldıldı
             totalWin *= 0.80; 
 
             return { totalWin, winningCoords, winningLines, isBigWin: totalWin >= (totalBet * 5) };
@@ -442,9 +440,11 @@
             });
         }
 
+        // Hell Hot stilində qazanan xətləri ekranda əyri/düz cizgilərlə birləşdirən funksiya
         function drawWinningLines(lines) {
             const svg = document.getElementById('winLinesSvg'); svg.innerHTML = '';
             const container = document.getElementById('slotContainer'), rect = container.getBoundingClientRect();
+            
             lines.forEach(lineCoords => {
                 let points = [];
                 lineCoords.forEach(coord => {
@@ -457,7 +457,12 @@
                 if (points.length > 1) {
                     let polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
                     polyline.setAttribute('points', points.join(' '));
-                    polyline.setAttribute('stroke', '#ffcc00'); polyline.setAttribute('stroke-width', '4'); polyline.setAttribute('fill', 'none');
+                    polyline.setAttribute('stroke', '#ffcc00'); 
+                    polyline.setAttribute('stroke-width', '5'); 
+                    polyline.setAttribute('stroke-linecap', 'round');
+                    polyline.setAttribute('stroke-linejoin', 'round');
+                    polyline.setAttribute('fill', 'none');
+                    polyline.style.filter = 'drop-shadow(0 0 6px #ff3300)';
                     svg.appendChild(polyline);
                 }
             });
