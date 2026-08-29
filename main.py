@@ -29,18 +29,11 @@ def send_telegram_async(message):
     
     threading.Thread(target=send).start()
 
-# --- DATA BAZASI (JSON Faylı Vasitəsilə Server Yenilənmələrində Silinmənin Qarşısının Alınması) ---
+# --- TƏKMİLLƏŞDİRİLMİŞ JSON BAZASI ---
 DB_FILE = "players.json"
 
 def load_players():
-    if os.path.exists(DB_FILE):
-        try:
-            with open(DB_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    # İlkin default oyunçular
-    return {
+    default_players = {
         "HOT_1106": {
             "id": "HOT_1106",
             "name": "Alexs Aliyev",
@@ -62,6 +55,23 @@ def load_players():
             "total_deposit": 0.00
         }
     }
+    if os.path.exists(DB_FILE):
+        try:
+            with open(DB_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+        except Exception as e:
+            print("Baza oxunma xətası, default yüklənir:", e)
+    
+    # Əgər fayl yoxdursa və ya xətalıdırsa, dərhal yenisini yarat
+    try:
+        with open(DB_FILE, "w", encoding="utf-8") as f:
+            json.dump(default_players, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print("Baza yaratma xətası:", e)
+        
+    return default_players
 
 def save_players():
     try:
@@ -155,7 +165,6 @@ def login():
         players_db[player_id]['last_seen'] = time.strftime("%H:%M:%S")
         save_players()
         
-        # Oyunçu hesabına daxil olduqda Telegram-a bildiriş
         msg = f"🔑 <b>OYUNÇU GİRİŞ ETDİ!</b>\n\n🆔 ID: <b>{player_id}</b>\n👤 Ad: {players_db[player_id]['name']}\n📧 Gmail: {players_db[player_id]['email']}"
         send_telegram_async(msg)
         
@@ -176,7 +185,6 @@ def auth():
     }
     save_players()
     
-    # Yeni qeydiyyat zamanı Telegram-a bildiriş
     msg = f"✨ <b>YENİ OYUNÇU QEYDİYYATI!</b>\n\n🆔 ID: <b>{new_id}</b>\n👤 Ad: {name}\n📧 Gmail: {email}"
     send_telegram_async(msg)
     
