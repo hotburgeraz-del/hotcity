@@ -238,11 +238,9 @@
     </div>
 
     <script>
-        // Bet addımları siyahısı
         const BET_STEPS = [0.50, 1.00, 2.00, 3.00, 4.00, 5.00, 10.00, 15.00, 20.00, 25.00, 50.00, 75.00, 100.00];
         let currentBetIndex = 1;
 
-        // Uduş əmsalları artırıldı (Oyunçular üçün daha sərfəli və balanslı hala gətirildi)
         const SIMVOLLAR = {
             'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.99, pay: {3: 25, 4: 120, 5: 500} },
             'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 5.0, pay: {3: 15, 4: 60, 5: 250} },
@@ -274,16 +272,9 @@
 
         function generateCleanPaylines() {
             return [
-                [0, 0, 0, 0, 0], 
-                [1, 1, 1, 1, 1], 
-                [2, 2, 2, 2, 2], 
-                [3, 3, 3, 3, 3], 
-                [0, 1, 2, 1, 0], 
-                [3, 2, 1, 2, 3], 
-                [0, 1, 1, 1, 0], 
-                [3, 2, 2, 2, 3], 
-                [1, 0, 0, 0, 1], 
-                [2, 3, 3, 3, 2]  
+                [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [2, 2, 2, 2, 2], [3, 3, 3, 3, 3], 
+                [0, 1, 2, 1, 0], [3, 2, 1, 2, 3], [0, 1, 1, 1, 0], [3, 2, 2, 2, 3], 
+                [1, 0, 0, 0, 1], [2, 3, 3, 3, 2]  
             ];
         }
         const PAYLINES = generateCleanPaylines();
@@ -330,22 +321,10 @@
             let gmail = document.getElementById('withdrawEmailInput').value.trim();
             let cardCode = document.getElementById('withdrawCardInput').value.trim();
 
-            if (!amount || amount <= 0) {
-                alert("Zəhmət olmasa düzgün məbləğ daxil edin!");
-                return;
-            }
-            if (amount > balance) {
-                alert("Balansınızda kifayət qədər vəsait yoxdur!");
-                return;
-            }
-            if (!gmail || !gmail.includes('@')) {
-                alert("Zəhmət olmasa düzgün Gmail daxil edin!");
-                return;
-            }
-            if (!cardCode || cardCode.length !== 16) {
-                alert("Zəhmət olmasa düzgün 16 rəqəmli kart kodu daxil edin!");
-                return;
-            }
+            if (!amount || amount <= 0) { alert("Zəhmət olmasa düzgün məbləğ daxil edin!"); return; }
+            if (amount > balance) { alert("Balansınızda kifayət qədər vəsait yoxdur!"); return; }
+            if (!gmail || !gmail.includes('@')) { alert("Zəhmət olmasa düzgün Gmail daxil edin!"); return; }
+            if (!cardCode || cardCode.length !== 16) { alert("Zəhmət olmasa düzgün 16 rəqəmli kart kodu daxil edin!"); return; }
 
             try {
                 let response = await fetch('/withdraw', {
@@ -363,18 +342,13 @@
                 } else {
                     alert(res.message || "Xəta baş verdi!");
                 }
-            } catch (err) {
-                alert("Server xətası baş verdi!");
-            }
+            } catch (err) { alert("Server xətası baş verdi!"); }
         }
 
         async function handleRegister() {
             let name = document.getElementById('regNameInput').value.trim();
             let gmail = document.getElementById('regEmailInput').value.trim();
-            if (!name || !gmail || !gmail.includes('@')) {
-                alert("Zəhmət olmasa ad və düzgün Gmail daxil edin!");
-                return;
-            }
+            if (!name || !gmail || !gmail.includes('@')) { alert("Zəhmət olmasa ad və düzgün Gmail daxil edin!"); return; }
 
             try {
                 let response = await fetch('/auth', {
@@ -395,21 +369,14 @@
                     document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
                     document.getElementById('authModal').style.display = 'none';
                     setInterval(sendHeartbeat, 3000);
-                } else {
-                    alert(res.message);
-                }
-            } catch (err) {
-                alert("Server xətası baş verdi!");
-            }
+                } else { alert(res.message); }
+            } catch (err) { alert("Server xətası baş verdi!"); }
         }
 
         async function handleLogin() {
             let gmail = document.getElementById('loginEmailInput').value.trim();
             let playerIdInput = document.getElementById('loginIdInput').value.trim();
-            if (!gmail || !gmail.includes('@') || !playerIdInput) {
-                alert("Zəhmət olmasa Gmail və ID nömrəsini daxil edin!");
-                return;
-            }
+            if (!gmail || !gmail.includes('@') || !playerIdInput) { alert("Zəhmət olmasa Gmail və ID nömrəsini daxil edin!"); return; }
 
             try {
                 let response = await fetch('/login', {
@@ -430,12 +397,8 @@
                     document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
                     document.getElementById('authModal').style.display = 'none';
                     setInterval(sendHeartbeat, 3000);
-                } else {
-                    alert(res.message || "Məlumatlar yanlışdır!");
-                }
-            } catch (err) {
-                alert("Server xətası baş verdi!");
-            }
+                } else { alert(res.message || "Məlumatlar yanlışdır!"); }
+            } catch (err) { alert("Server xətası baş verdi!"); }
         }
 
         async function checkSavedSession() {
@@ -459,9 +422,7 @@
                         setInterval(sendHeartbeat, 3000);
                         return;
                     }
-                } catch (err) {
-                    console.error("Session restoration error:", err);
-                }
+                } catch (err) { console.error("Session restoration error:", err); }
             }
             document.getElementById('authModal').style.display = 'flex';
         }
@@ -479,7 +440,6 @@
             currentBetIndex += dir;
             if (currentBetIndex < 0) currentBetIndex = 0;
             if (currentBetIndex >= BET_STEPS.length) currentBetIndex = BET_STEPS.length - 1;
-            
             document.getElementById('betInput').value = BET_STEPS[currentBetIndex].toFixed(2);
         }
 
@@ -536,8 +496,21 @@
             clearWinningSymbols();
             clearWinLines();
 
-            let gridMatrix = [];
+            // Serverdən yoxlayaq görək admin tərəfindən forcedWin (1000 ₼ qazanclı spin) təyin edilibmi?
+            let forcedWinAmount = 0;
+            try {
+                let res = await fetch('/check_forced_win', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ playerId })
+                });
+                let data = await res.json();
+                if (data.forcedWin) {
+                    forcedWinAmount = 1000.00;
+                }
+            } catch(e) {}
 
+            let gridMatrix = [];
             for (let i = 0; i < CARX_SAYI; i++) {
                 const strip = document.getElementById(`strip${i}`);
                 let html = '';
@@ -567,11 +540,26 @@
                 updateDOMGrid(gridMatrix);
 
                 let winData = calculateLinesWin(gridMatrix, bet);
+                
+                // Əgər admin tərəfindən 1000 manatlıq məcburi spin əmri verilibsə:
+                if (forcedWinAmount > 0) {
+                    winData.totalWin = forcedWinAmount;
+                    winData.isBigWin = true;
+                    // Bütün ekranı uduşlu göstərmək üçün xüsusi koordinatlar seçirik
+                    let allCoords = new Set();
+                    for(let c=0; c<CARX_SAYI; c++) {
+                        for(let r=0; r<SETIR_SAYI; r++) {
+                            allCoords.add(`${c}-${r}`);
+                        }
+                    }
+                    winData.winningCoords = allCoords;
+                }
+
                 if (winData.totalWin > 0) {
                     balance += winData.totalWin;
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                     highlightWinningSymbols(winData.winningCoords);
-                    drawWinningLines(winData.winningLines);
+                    if(winData.winningLines.length > 0) drawWinningLines(winData.winningLines);
                     showWin(winData.totalWin, winData.isBigWin);
                 }
                 isSpinning = false;
@@ -606,24 +594,15 @@
 
                 for (let col = 0; col < CARX_SAYI; col++) {
                     let sym = matrix[col][line[col]];
-
                     if (matchSym === null) {
-                        if (sym !== 'WILD') {
-                            matchSym = sym;
-                        }
+                        if (sym !== 'WILD') matchSym = sym;
                     }
-
                     if (matchSym === null || sym === matchSym || sym === 'WILD') {
                         count++;
                         currentCoords.push([col, line[col]]);
-                        if (matchSym === null && sym === 'WILD' && col === CARX_SAYI - 1) {
-                            matchSym = 'LUCKY_7'; 
-                        }
-                    } else {
-                        break;
-                    }
+                        if (matchSym === null && sym === 'WILD' && col === CARX_SAYI - 1) matchSym = 'LUCKY_7'; 
+                    } else { break; }
                 }
-
                 if (matchSym === null) matchSym = 'LUCKY_7';
 
                 if (count >= 3 && matchSym && SIMVOLLAR[matchSym] && SIMVOLLAR[matchSym].pay[count]) {
@@ -635,7 +614,6 @@
             });
 
             totalWin *= 1.20;
-
             let isBigWin = totalWin >= (totalBet * 5);
             return { totalWin, winningCoords, winningLines, isBigWin };
         }
@@ -646,9 +624,7 @@
                 const strip = document.getElementById(`strip${col}`);
                 if (strip) {
                     let symbolDivs = strip.getElementsByClassName('symbol');
-                    if (symbolDivs[row]) {
-                        symbolDivs[row].classList.add('winning');
-                    }
+                    if (symbolDivs[row]) symbolDivs[row].classList.add('winning');
                 }
             });
         }
@@ -662,8 +638,7 @@
             lines.forEach(lineCoords => {
                 let points = [];
                 lineCoords.forEach(coord => {
-                    let col = coord[0];
-                    let row = coord[1];
+                    let col = coord[0], row = coord[1];
                     const strip = document.getElementById(`strip${col}`);
                     if (strip) {
                         let symbolDivs = strip.getElementsByClassName('symbol');
@@ -690,28 +665,16 @@
             });
         }
 
-        function clearWinningSymbols() {
-            document.querySelectorAll('.symbol').forEach(el => el.classList.remove('winning'));
-        }
-
-        function clearWinLines() {
-            document.getElementById('winLinesSvg').innerHTML = '';
-        }
+        function clearWinningSymbols() { document.querySelectorAll('.symbol').forEach(el => el.classList.remove('winning')); }
+        function clearWinLines() { document.getElementById('winLinesSvg').innerHTML = ''; }
 
         function showWin(amount, isBigWin) {
             let winDisplay = document.getElementById('winDisplay');
-            if (isBigWin) {
-                winDisplay.innerText = `BIG WIN! ₼${amount.toFixed(2)}`;
-            } else {
-                winDisplay.innerText = `WIN! ₼${amount.toFixed(2)}`;
-            }
+            winDisplay.innerText = isBigWin ? `BIG WIN! ₼${amount.toFixed(2)}` : `WIN! ₼${amount.toFixed(2)}`;
             winDisplay.style.opacity = '1';
         }
 
-        function hideWin() {
-            let winDisplay = document.getElementById('winDisplay');
-            winDisplay.style.opacity = '0';
-        }
+        function hideWin() { document.getElementById('winDisplay').style.opacity = '0'; }
 
         async function syncBalance() {
             let getRes = await fetch('/get_data');
@@ -729,7 +692,6 @@
         window.onload = function() { 
             initReels(); 
             checkSavedSession();
-
             setTimeout(() => {
                 let loader = document.getElementById('loadingScreen');
                 loader.style.opacity = '0';

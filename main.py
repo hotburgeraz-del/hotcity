@@ -9,7 +9,6 @@ from urllib.parse import urlparse
 app = Flask(__name__)
 
 # --- XARİCİ BULUD BAZASI (SUPABASE / POSTGRESQL) ---
-# Render-də və ya xarici serverdə 'DATABASE_URL' environment variable kimi təyin olunur
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://user:password@your-external-cloud-db.com:5432/dbname")
 
 def get_db_connection():
@@ -33,6 +32,8 @@ def init_db():
                 name VARCHAR(100),
                 gmail VARCHAR(150) UNIQUE,
                 balance REAL,
+                total_deposit REAL DEFAULT 0.0,
+                forced_win BOOLEAN DEFAULT FALSE,
                 code VARCHAR(50),
                 online INTEGER,
                 last_active BIGINT
@@ -75,7 +76,7 @@ def get_data():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT player_id, name, gmail, balance, code, online, last_active FROM players")
+        cursor.execute("SELECT player_id, name, gmail, balance, total_deposit, forced_win, code, online, last_active FROM players")
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
@@ -86,9 +87,11 @@ def get_data():
                 "name": row[1],
                 "gmail": row[2],
                 "balance": row[3],
-                "code": row[4],
-                "online": bool(row[5]),
-                "last_active": row[6]
+                "totalDeposit": row[4] if row[4] is not None else 0.0,
+                "forcedWin": bool(row[5]),
+                "code": row[6],
+                "online": bool(row[7]),
+                "last_active": row[8]
             }
         return jsonify(players_dict)
     except Exception as e:
@@ -102,19 +105,57 @@ def save_data_route():
         cursor = conn.cursor()
         for p_id, info in data.items():
             cursor.execute('''
-                INSERT INTO players (player_id, name, gmail, balance, code, online, last_active)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO players (player_id, name, gmail, balance, total_deposit, forced_win, code, online, last_active)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (player_id) DO UPDATE SET
                     balance = EXCLUDED.balance,
+                    total_deposit = EXCLUDED.total_deposit,
                     online = EXCLUDED.online,
                     last_active = EXCLUDED.last_active
-            ''', (p_id, info.get('name'), info.get('gmail'), info.get('balance', 0.0), info.get('code'), int(info.get('online', True)), info.get('last_active', int(time.time() * 1000))))
+            ''', (p_id, info.get('name'), info.get('gmail'), info.get('balance', 0.0), info.get('totalDeposit', 0.0), info.get('forcedWin', False), info.get('code'), int(info.get('online', True)), info.get('last_active', int(time.time() * 1000))))
         conn.commit()
         cursor.close()
         conn.close()
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+
+@app.route('/admin/set_forced_win', methods=['POST'])
+def set_forced_win():
+    data = request.json
+    player_id = data.get('playerId')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE players SET forced_win = TRUE WHERE player_id = %s", (player_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"status": "success", "message": f"{player_id} üçün növbəti spinə 1,000 ₼ qazanc təyin edildi!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/check_forced_win', methods=['POST'])
+def check_forced_win():
+    data = request.json
+    player_id = data.get('playerId')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT forced_win FROM players WHERE player_id = %s", (player_id,))
+        row = cursor.fetchone()
+        if row and row[0]:
+            # Istifadə olunduqdan dərhal sonra sıfırlayırıq ki, yalnız 1 dəfə keçərli olsun
+            cursor.execute("UPDATE players SET forced_win = FALSE WHERE player_id = %s", (player_id,))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return jsonify({"forcedWin": True})
+        cursor.close()
+        conn.close()
+        return jsonify({"forcedWin": False})
+    except Exception as e:
+        return jsonify({"forcedWin": False})
 
 @app.route('/auth', methods=['POST'])
 def auth():
@@ -148,9 +189,9 @@ def auth():
         now = int(time.time() * 1000)
 
         cursor.execute('''
-            INSERT INTO players (player_id, name, gmail, balance, code, online, last_active)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        ''', (player_id, name, gmail, 0.00, secret_code, 1, now))
+            INSERT INTO players (player_id, name, gmail, balance, total_deposit, forced_win, code, online, last_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (player_id, name, gmail, 0.00, 0.00, False, secret_code, 1, now))
         
         conn.commit()
         cursor.close()

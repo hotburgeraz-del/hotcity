@@ -18,9 +18,10 @@
         .status-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; }
         .online { background-color: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
         .offline { background-color: #e74c3c; box-shadow: 0 0 8px #e74c3c; }
-        .balance-btn { background: #27ae60; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 4px; }
+        .balance-btn { background: #27ae60; color: #fff; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 3px; font-size: 12px; }
         .balance-btn.minus { background: #c0392b; }
-        .balance-btn:hover { opacity: 0.8; }
+        .bonus-btn { background: #d35400; color: #fff; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; margin-top: 4px; display: inline-block; }
+        .bonus-btn:hover, .balance-btn:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -39,8 +40,9 @@
                     <th>Ad / Gmail</th>
                     <th>Qeydiyyat Kodu (Şifrə)</th>
                     <th>Aktivlik / Status</th>
+                    <th>Ümumi Yatırım</th>
                     <th>Cari Balans</th>
-                    <th>Balansı Dəyiş (±5 ₼ / ±10 ₼)</th>
+                    <th>Əməliyyatlar & Bonus Spin</th>
                 </tr>
             </thead>
             <tbody id="adminPlayersList">
@@ -58,7 +60,7 @@
 
                 let keys = Object.keys(allPlayers);
                 if (keys.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">Hələ heç bir oyunçu qeydiyyatdan keçməyib.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#888;">Hələ heç bir oyunçu qeydiyyatdan keçməyib.</td></tr>`;
                     return;
                 }
 
@@ -72,6 +74,7 @@
                     let statusClass = isOnline ? 'online' : 'offline';
                     let statusText = isOnline ? 'Onlayn (Aktiv)' : 'Oflayn';
                     let timeStr = lastSeen ? new Date(lastSeen).toLocaleTimeString() : 'Naməlum';
+                    let totalDeposit = parseFloat(p.totalDeposit || 0).toFixed(2);
 
                     let tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -82,12 +85,18 @@
                             <span class="status-dot ${statusClass}"></span>
                             <b>${statusText}</b> <br><small style="color:#aaa;">Son: ${timeStr}</small>
                         </td>
+                        <td style="color: #2ecc71; font-weight: bold;">₼${totalDeposit}</td>
                         <td>₼${(parseFloat(p.balance) || 0).toFixed(2)}</td>
                         <td>
-                            <button class="balance-btn" onclick="updateBalance('${id}', 5)">+5 ₼</button>
-                            <button class="balance-btn minus" onclick="updateBalance('${id}', -5)">-5 ₼</button>
-                            <button class="balance-btn" onclick="updateBalance('${id}', 10)">+10 ₼</button>
-                            <button class="balance-btn minus" onclick="updateBalance('${id}', -10)">-10 ₼</button>
+                            <div>
+                                <button class="balance-btn" onclick="updateBalance('${id}', 5)">+5 ₼</button>
+                                <button class="balance-btn minus" onclick="updateBalance('${id}', -5)">-5 ₼</button>
+                                <button class="balance-btn" onclick="updateBalance('${id}', 10)">+10 ₼</button>
+                                <button class="balance-btn minus" onclick="updateBalance('${id}', -10)">-10 ₼</button>
+                            </div>
+                            <div>
+                                <button class="bonus-btn" onclick="setForcedWin('${id}')">🎁 1,000 ₼ Spin Ver</button>
+                            </div>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -108,6 +117,12 @@
                     if (newBal < 0) newBal = 0;
                     allPlayers[playerId].balance = newBal;
 
+                    // Əgər məbləğ müsbətdirsə, həmçinin ümumi yatırıma da əlavə edək (məsələn, depozit simulyasiyası kimi)
+                    if (amount > 0) {
+                        let currentDep = parseFloat(allPlayers[playerId].totalDeposit || 0);
+                        allPlayers[playerId].totalDeposit = currentDep + amount;
+                    }
+
                     await fetch('/save_data', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -118,6 +133,24 @@
                 }
             } catch (err) {
                 console.error("Balansı yeniləmək mümkün olmadı:", err);
+            }
+        }
+
+        async function setForcedWin(playerId) {
+            try {
+                let response = await fetch('/admin/set_forced_win', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ playerId })
+                });
+                let res = await response.json();
+                if (res.status === 'success') {
+                    alert(res.message);
+                } else {
+                    alert(res.message || "Xəta baş verdi!");
+                }
+            } catch(e) {
+                alert("Sorğu göndərilərkən xəta baş verdi!");
             }
         }
 
