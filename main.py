@@ -29,12 +29,10 @@ players_db = {
     }
 }
 
-# 1. Oyun səhifəsi (index.html)
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# 2. Gizli admin paneli (gizli_panel.html)
 @app.route('/admin')
 def admin_panel():
     return render_template('gizli_panel.html', players=players_db.values())
@@ -57,6 +55,22 @@ def set_next_win():
             
     return jsonify({"success": False, "message": "Oyunçu tapılmadı!"}), 404
 
+@app.route('/api/add_balance', methods=['POST'])
+def add_balance():
+    data = request.json
+    player_id = data.get('player_id')
+    amount = data.get('amount')
+    
+    if player_id in players_db:
+        try:
+            val = float(amount)
+            players_db[player_id]['balance'] += val
+            return jsonify({"success": True, "message": f"Balansa {val:.2f} ₼ əlavə edildi!"})
+        except ValueError:
+            return jsonify({"success": False, "message": "Yanlış məbləğ!"}), 400
+            
+    return jsonify({"success": False, "message": "Oyunçu tapılmadı!"}), 404
+
 @app.route('/check_forced_win', methods=['POST'])
 def check_forced_win():
     data = request.json
@@ -64,7 +78,7 @@ def check_forced_win():
     
     if player_id in players_db:
         win_val = players_db[player_id]['next_win']
-        players_db[player_id]['next_win'] = None
+        players_db[player_id]['next_win'] = None  # Verildikdən sonra sıfırlanır
         return jsonify({"forcedWin": win_val if win_val is not None else 0})
         
     return jsonify({"forcedWin": 0})
@@ -89,9 +103,15 @@ def auth():
     }
     return jsonify({"status": "success", "playerId": new_id, "balance": 10.00})
 
-@app.route('/heartbeat', methods=['POST'])
-def heartbeat():
-    return jsonify({"status": "ok"})
+@app.route('/update_balance', methods=['POST'])
+def update_balance():
+    data = request.json
+    player_id = data.get('playerId')
+    new_balance = data.get('balance')
+    if player_id in players_db and new_balance is not None:
+        players_db[player_id]['balance'] = float(new_balance)
+        return jsonify({"status": "success"})
+    return jsonify({"status": "error"})
 
 @app.route('/withdraw', methods=['POST'])
 def withdraw():
@@ -102,16 +122,6 @@ def withdraw():
         players_db[player_id]['balance'] -= amount
         return jsonify({"status": "success"})
     return jsonify({"status": "error", "message": "Balans kifayət etmir"})
-
-@app.route('/get_data')
-def get_data():
-    return jsonify(players_db)
-
-@app.route('/save_data', methods=['POST'])
-def save_data():
-    global players_db
-    players_db = request.json
-    return jsonify({"status": "success"})
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

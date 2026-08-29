@@ -354,12 +354,11 @@
             let bet = BET_STEPS[currentBetIndex];
             if (balance < bet) { if (autoSpinActive) toggleAutoSpin(); alert("Balans kifayət etmir!"); return; }
 
-            balance -= bet;
+            balance = parseFloat((balance - bet).toFixed(2));
             document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
             isSpinning = true;
             hideWin(); clearWinningSymbols(); clearWinLines();
 
-            // Admin tərəfindən təyin olunan xüsusi qazanc məbləğini yoxlayırıq
             let forcedWinAmount = 0;
             try {
                 let res = await fetch('/check_forced_win', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ playerId }) });
@@ -391,7 +390,6 @@
             setTimeout(() => {
                 let winData = calculateLinesWin(gridMatrix, bet);
 
-                // Əgər admin tərəfindən xüsusi məbləğ yazılıbsa, həmin məbləği qazandırırıq
                 if (forcedWinAmount > 0) {
                     winData.totalWin = forcedWinAmount;
                     winData.isBigWin = forcedWinAmount >= (bet * 5);
@@ -401,7 +399,7 @@
                 }
 
                 if (winData.totalWin > 0) {
-                    balance += winData.totalWin;
+                    balance = parseFloat((balance + winData.totalWin).toFixed(2));
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                     highlightWinningSymbols(winData.winningCoords);
                     if(winData.winningLines.length > 0) drawWinningLines(winData.winningLines);
@@ -476,12 +474,11 @@
         function hideWin() { document.getElementById('winDisplay').style.opacity = '0'; }
 
         async function syncBalance() {
-            let getRes = await fetch('/get_data');
-            let allPlayers = await getRes.json();
-            if(allPlayers[playerId]) {
-                allPlayers[playerId].balance = balance;
-                await fetch('/save_data', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(allPlayers) });
-            }
+            await fetch('/update_balance', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ playerId: playerId, balance: balance }) 
+            });
         }
 
         window.onload = function() { 
