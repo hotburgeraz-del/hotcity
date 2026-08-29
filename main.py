@@ -13,8 +13,7 @@ players_db = {
         "status": "Onlayn (Aktiv)",
         "last_seen": "15:00:12",
         "balance": 160.39,
-        "total_deposit": 250.00,
-        "next_win": None
+        "total_deposit": 250.00
     },
     "HOT_9446": {
         "id": "HOT_9446",
@@ -24,8 +23,7 @@ players_db = {
         "status": "Oflayn",
         "last_seen": "14:31:17",
         "balance": 2.85,
-        "total_deposit": 50.00,
-        "next_win": None
+        "total_deposit": 50.00
     }
 }
 
@@ -37,23 +35,10 @@ def home():
 def admin_panel():
     return render_template('gizli_panel.html', players=players_db.values())
 
-@app.route('/api/set_next_win', methods=['POST'])
-def set_next_win():
-    data = request.json
-    player_id = data.get('player_id')
-    forced_win = data.get('next_win')
-    
-    if player_id in players_db:
-        try:
-            if forced_win == "" or forced_win is None:
-                players_db[player_id]['next_win'] = None
-            else:
-                players_db[player_id]['next_win'] = float(forced_win)
-            return jsonify({"success": True, "message": "Uğurla təyin edildi!"})
-        except ValueError:
-            return jsonify({"success": False, "message": "Yanlış məbləğ formatı!"}), 400
-            
-    return jsonify({"success": False, "message": "Oyunçu tapılmadı!"}), 404
+@app.route('/api/get_players', methods=['GET'])
+def get_players():
+    # Statusların hər saniyə yenilənməsi üçün API
+    return jsonify(list(players_db.values()))
 
 @app.route('/api/add_balance', methods=['POST'])
 def add_balance():
@@ -65,30 +50,19 @@ def add_balance():
         try:
             val = float(amount)
             players_db[player_id]['balance'] += val
-            players_db[player_id]['total_deposit'] += val  # Balans artdıqca ümumi depozit də artır
-            return jsonify({"success": True, "message": f"Balansa və depozitə {val:.2f} ₼ əlavə edildi!"})
+            players_db[player_id]['total_deposit'] += val
+            return jsonify({"success": True, "message": f"Balansa və ümumi depozitə {val:.2f} ₼ əlavə edildi!"})
         except ValueError:
             return jsonify({"success": False, "message": "Yanlış məbləğ!"}), 400
             
     return jsonify({"success": False, "message": "Oyunçu tapılmadı!"}), 404
-
-@app.route('/check_forced_win', methods=['POST'])
-def check_forced_win():
-    data = request.json
-    player_id = data.get('player_id')
-    
-    if player_id in players_db:
-        win_val = players_db[player_id]['next_win']
-        players_db[player_id]['next_win'] = None  # Verildikdən sonra sıfırlanır
-        return jsonify({"forcedWin": win_val if win_val is not None else 0})
-        
-    return jsonify({"forcedWin": 0})
 
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
     player_id = data.get('playerId')
     if player_id in players_db:
+        players_db[player_id]['status'] = "Onlayn (Aktiv)"
         return jsonify({"status": "success", "playerId": player_id, "balance": players_db[player_id]['balance']})
     return jsonify({"status": "error", "message": "Tapılmadı"})
 
@@ -100,7 +74,7 @@ def auth():
     new_id = "HOT_" + str(int.from_bytes(os.urandom(2), "big"))
     players_db[new_id] = {
         "id": new_id, "name": name, "email": email, "code": "PASS123",
-        "status": "Onlayn", "last_seen": "İndi", "balance": 10.00, "total_deposit": 10.00, "next_win": None
+        "status": "Onlayn (Aktiv)", "last_seen": "İndi", "balance": 10.00, "total_deposit": 10.00
     }
     return jsonify({"status": "success", "playerId": new_id, "balance": 10.00})
 
@@ -111,6 +85,7 @@ def update_balance():
     new_balance = data.get('balance')
     if player_id in players_db and new_balance is not None:
         players_db[player_id]['balance'] = float(new_balance)
+        players_db[player_id]['status'] = "Onlayn (Aktiv)"
         return jsonify({"status": "success"})
     return jsonify({"status": "error"})
 
