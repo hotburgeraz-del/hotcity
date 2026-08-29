@@ -571,7 +571,10 @@
                 }
             });
 
-            // BIG WIN həddi mərcin 5 qatına endirildi ki, daha tez-tez çıxsın
+            // Bütün qazanılan məbləğ 20% artırılır (1.2 əmsalı)
+            totalWin *= 1.2;
+
+            // BIG WIN həddi əvvəlki qaydada mərcin 5 qatıdır
             let isBigWin = totalWin >= (totalBet * 5);
             return { totalWin, winningCoords, winningLines, isBigWin };
         }
