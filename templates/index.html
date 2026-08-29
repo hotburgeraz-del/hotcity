@@ -20,7 +20,6 @@
             padding: 5px 0; 
         }
 
-        /* LOADING SCREEN */
         #loadingScreen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -442,7 +441,7 @@
                 }, i * 100);
             }
 
-            setTimeout(() => {
+            setTimeout(async () => {
                 updateDOMGrid(gridMatrix);
                 let winData = calculateLinesWin(gridMatrix, bet);
 
@@ -454,7 +453,7 @@
                     showWin(winData.totalWin, winData.isBigWin);
                 }
                 isSpinning = false;
-                syncBalance();
+                await syncBalance();
             }, 700 + (CARX_SAYI * 100));
         }
 
