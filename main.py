@@ -29,7 +29,7 @@ def send_telegram_async(message):
     
     threading.Thread(target=send).start()
 
-# --- JSON BAZASI ---
+# --- TƏKMİLLƏŞDİRİLMİŞ JSON BAZASI (Əksik açarları avtomatik tamamlayır) ---
 DB_FILE = "players.json"
 
 def load_players():
@@ -60,6 +60,22 @@ def load_players():
             with open(DB_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, dict):
+                    # Köhnə JSON fayllarında əksik ola biləcək açarları yoxlayıb əlavə edirik
+                    for pid, pdata in data.items():
+                        if "total_deposit" not in pdata:
+                            pdata["total_deposit"] = 0.00
+                        if "balance" not in pdata:
+                            pdata["balance"] = 0.00
+                        if "status" not in pdata:
+                            pdata["status"] = "Oflayn"
+                        if "last_seen" not in pdata:
+                            pdata["last_seen"] = "00:00:00"
+                        if "code" not in pdata:
+                            pdata["code"] = "PASS123"
+                        if "email" not in pdata:
+                            pdata["email"] = "qonaq@gmail.com"
+                        if "name" not in pdata:
+                            pdata["name"] = "Qonaq"
                     return data
         except Exception as e:
             print("Baza oxunma xətası:", e)
@@ -120,15 +136,10 @@ def add_security_headers(response):
 def home():
     return render_template('index.html')
 
-# Yoxlamaq üçün admin paneli birbaşa mətnyönümlü (və ya şablon xətası verilməyən) hala gətirdik:
 @app.route('/admin')
 @security_shield
 def admin_panel():
-    try:
-        return render_template('gizli_panel.html', players=players_db.values())
-    except Exception as e:
-        # Əgər gizli_panel.html faylında problem olsa, səbəbi birbaşa ekrana çıxaracaq
-        return f"<h3>Admin Panel Şablon Xətası:</h3><p>{str(e)}</p><br><a href='/api/get_players'>Oyunçuların JSON siyahısına bax</a>"
+    return render_template('gizli_panel.html', players=players_db.values())
 
 @app.route('/api/get_players', methods=['GET'])
 @security_shield
