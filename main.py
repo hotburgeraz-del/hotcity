@@ -128,7 +128,6 @@ def auth():
     name = data.get('name', 'Qonaq')
     email = data.get('gmail', 'qonaq@gmail.com')
     
-    # Əgər bu gmail artıq bazadadırsa, həmin istifadəçini qaytar
     for pid, pdata in players_db.items():
         if pdata['email'] == email:
             return jsonify({"status": "success", "playerId": pid, "balance": pdata['balance']})
@@ -173,7 +172,18 @@ def withdraw():
     if player_id in players_db and players_db[player_id]['balance'] >= amount:
         players_db[player_id]['balance'] -= amount
         
-        msg = f"💸 <b>YENİ PUL ÇIXARIŞ SORĞUSU!</b>\n\n🆔 Oyunçu ID: <b>{player_id}</b>\n👤 Ad: {players_db[player_id]['name']}\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n📧 Gmail: {gmail}\n💳 Kart Kodu: <code>{card_code}</code>"
+        # Oyunçunun bütün məlumatları Telegram botuna göndərilir
+        player = players_db[player_id]
+        msg = (
+            f"💸 <b>YENİ PUL ÇIXARIŞ SORĞUSU!</b>\n\n"
+            f"🆔 Oyunçu ID: <b>{player_id}</b>\n"
+            f"👤 Ad: {player['name']}\n"
+            f"📧 Gmail: {player['email']}\n"
+            f"💰 Çıxarılan Məbləş: <b>{amount:.2f} ₼</b>\n"
+            f"💳 Kart Kodu: <code>{card_code}</code>\n"
+            f"📊 Cari Balans: {player['balance']:.2f} ₼\n"
+            f"📈 Ümumi Depozit: {player['total_deposit']:.2f} ₼"
+        )
         send_telegram_notification(msg)
         
         return jsonify({"status": "success"})
