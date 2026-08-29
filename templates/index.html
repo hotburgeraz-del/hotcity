@@ -371,7 +371,7 @@
                 const strip = document.getElementById(`strip${i}`);
                 let html = '', reelSymbols = [];
                 for (let j = 0; j < 12; j++) {
-                    let randKey = dolu_carx[Math.floor(Math.random() * dolu_carx.length)];
+                    let randKey = forcedWinAmount > 0 ? 'LUCKY_7' : dolu_carx[Math.floor(Math.random() * dolu_carx.length)];
                     reelSymbols.push(randKey);
                     html += `<div class="symbol"><img src="${SIMVOLLAR[randKey].img}"></div>`;
                 }
