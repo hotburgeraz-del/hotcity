@@ -238,17 +238,18 @@
     </div>
 
     <script>
-        // Bet addımları siyahısı (0.50-dən başlayır, 1 manat və s. artaraq 100-ə çatır)
+        // Bet addımları siyahısı
         const BET_STEPS = [0.50, 1.00, 2.00, 3.00, 4.00, 5.00, 10.00, 15.00, 20.00, 25.00, 50.00, 75.00, 100.00];
-        let currentBetIndex = 1; // Başlanğıc 1.00 ₼ (indeks 1)
+        let currentBetIndex = 1;
 
+        // Uduş əmsalları artırıldı (Oyunçular üçün daha sərfəli və balanslı hala gətirildi)
         const SIMVOLLAR = {
-            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.99, pay: {3: 11, 4: 55, 5: 220} },
-            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 5.0, pay: {3: 5.5, 4: 22, 5: 110} },
-            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 5.97, pay: {3: 3.3, 4: 11, 5: 44} },
-            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 7.98, pay: {3: 2.2, 4: 8.8, 5: 33} },
-            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', ceki: 7.98, pay: {3: 2.2, 4: 8.8, 5: 33} },
-            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', ceki: 9.99, pay: {3: 1.1, 4: 5.5, 5: 22} },
+            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.99, pay: {3: 25, 4: 120, 5: 500} },
+            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 5.0, pay: {3: 15, 4: 60, 5: 250} },
+            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 5.97, pay: {3: 8, 4: 30, 5: 120} },
+            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 7.98, pay: {3: 5, 4: 20, 5: 80} },
+            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', ceki: 7.98, pay: {3: 5, 4: 20, 5: 80} },
+            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', ceki: 9.99, pay: {3: 3, 4: 12, 5: 50} },
         };
 
         const CARX_SAYI = 5;
@@ -633,7 +634,6 @@
                 }
             });
 
-            // Ümumi qazanc 20% artırıldı
             totalWin *= 1.20;
 
             let isBigWin = totalWin >= (totalBet * 5);
@@ -730,7 +730,6 @@
             initReels(); 
             checkSavedSession();
 
-            // 4 saniyəlik loading ekranını gizlətmək
             setTimeout(() => {
                 let loader = document.getElementById('loadingScreen');
                 loader.style.opacity = '0';
