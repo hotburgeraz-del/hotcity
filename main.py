@@ -29,15 +29,15 @@ players_db = {
     }
 }
 
-# 1. Oyun səhifəsi (index.html) - əsas linkə girəndə açılacaq
+# 1. Oyun səhifəsi (index.html)
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# 2. Admin paneli - /admin yazanda açılacaq
+# 2. Gizli admin paneli (gizli_panel.html)
 @app.route('/admin')
 def admin_panel():
-    return render_template('admin.html', players=players_db.values())
+    return render_template('gizli_panel.html', players=players_db.values())
 
 @app.route('/api/set_next_win', methods=['POST'])
 def set_next_win():
@@ -95,7 +95,6 @@ def heartbeat():
 
 @app.route('/withdraw', methods=['POST'])
 def withdraw():
-    data.get('playerId')
     data = request.json
     player_id = data.get('playerId')
     amount = data.get('amount')
