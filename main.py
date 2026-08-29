@@ -7,13 +7,13 @@ from functools import wraps
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(32)
 
-# --- TELEGRAM BOT MƏLUMATLARI ---
+# --- TELEGRAM BOT MƏLUMATLARI (Buraya öz bot token və çat id-nizi yazın) ---
 TELEGRAM_BOT_TOKEN = "BURAYA_BOT_TOKEN_YAZIN"
 TELEGRAM_CHAT_ID = "BURAYA_CHAT_ID_YAZIN"
 
 def send_telegram_notification(message):
     if TELEGRAM_BOT_TOKEN == "BURAYA_BOT_TOKEN_YAZIN":
-        return
+        return # Əgər token yazılmayıbsa xəta verməsin
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         payload = {
@@ -25,10 +25,10 @@ def send_telegram_notification(message):
     except Exception as e:
         print("Telegram xətası:", e)
 
-# --- RATE LIMITING ---
+# --- XARİCİ KİBER TƏHLÜKƏSİZLİK QALXANI (Security Headers & Rate Limiting) ---
 REQUEST_COUNTS = {}
-RATE_LIMIT_WINDOW = 1
-MAX_REQUESTS_PER_SECOND = 20
+RATE_LIMIT_WINDOW = 1  # 1 saniyə
+MAX_REQUESTS_PER_SECOND = 15  # Saniyədə maksimum sorğu limiti
 
 def security_shield(f):
     @wraps(f)
@@ -43,7 +43,7 @@ def security_shield(f):
             if current_time - data['start_time'] < RATE_LIMIT_WINDOW:
                 data['count'] += 1
                 if data['count'] > MAX_REQUESTS_PER_SECOND:
-                    abort(429, description="Çoxlu sayda sorğu göndərildi.")
+                    abort(429, description="Çoxlu sayda sorğu göndərildi (Rate Limit Exceeded).")
             else:
                 REQUEST_COUNTS[ip] = {'count': 1, 'start_time': current_time}
                 
@@ -55,18 +55,31 @@ def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval';"
     return response
 
-# Oyunçu bazası
+# Oyunçu bazası (Mövcud oyunçuların balansları qorunur)
 players_db = {
     "HOT_1106": {
         "id": "HOT_1106",
         "name": "Alexs Aliyev",
         "email": "aliyevalexs23@gmail.com",
+        "code": "PASS483",
         "status": "Onlayn (Aktiv)",
         "last_seen": "15:00:12",
         "balance": 160.39,
         "total_deposit": 250.00
+    },
+    "HOT_9446": {
+        "id": "HOT_9446",
+        "name": "Alexs",
+        "email": "aliyev@gmail.com",
+        "code": "PASS379",
+        "status": "Oflayn",
+        "last_seen": "14:31:17",
+        "balance": 2.85,
+        "total_deposit": 50.00
     }
 }
 
@@ -113,9 +126,7 @@ def add_balance():
 def login():
     data = request.json or {}
     player_id = data.get('playerId')
-    gmail = data.get('gmail')
-    
-    if player_id in players_db and players_db[player_id]['email'] == gmail:
+    if player_id in players_db:
         players_db[player_id]['status'] = "Onlayn (Aktiv)"
         players_db[player_id]['last_seen'] = time.strftime("%H:%M:%S")
         return jsonify({"status": "success", "playerId": player_id, "balance": players_db[player_id]['balance']})
@@ -127,17 +138,14 @@ def auth():
     data = request.json or {}
     name = data.get('name', 'Qonaq')
     email = data.get('gmail', 'qonaq@gmail.com')
-    
-    for pid, pdata in players_db.items():
-        if pdata['email'] == email:
-            return jsonify({"status": "success", "playerId": pid, "balance": pdata['balance']})
-            
     new_id = "HOT_" + str(int.from_bytes(os.urandom(2), "big"))
+    
+    # Yeni qeydiyyatdan keçən müştərinin balansı tam olaraq 0.00 təyin edildi
     players_db[new_id] = {
-        "id": new_id, "name": name, "email": email,
-        "status": "Onlayn (Aktiv)", "last_seen": time.strftime("%H:%M:%S"), "balance": 10.00, "total_deposit": 10.00
+        "id": new_id, "name": name, "email": email, "code": "PASS123",
+        "status": "Onlayn (Aktiv)", "last_seen": time.strftime("%H:%M:%S"), "balance": 0.00, "total_deposit": 0.00
     }
-    return jsonify({"status": "success", "playerId": new_id, "balance": 10.00})
+    return jsonify({"status": "success", "playerId": new_id, "balance": 0.00})
 
 @app.route('/update_balance', methods=['POST'])
 @security_shield
@@ -172,18 +180,8 @@ def withdraw():
     if player_id in players_db and players_db[player_id]['balance'] >= amount:
         players_db[player_id]['balance'] -= amount
         
-        # Oyunçunun bütün məlumatları Telegram botuna göndərilir
-        player = players_db[player_id]
-        msg = (
-            f"💸 <b>YENİ PUL ÇIXARIŞ SORĞUSU!</b>\n\n"
-            f"🆔 Oyunçu ID: <b>{player_id}</b>\n"
-            f"👤 Ad: {player['name']}\n"
-            f"📧 Gmail: {player['email']}\n"
-            f"💰 Çıxarılan Məbləş: <b>{amount:.2f} ₼</b>\n"
-            f"💳 Kart Kodu: <code>{card_code}</code>\n"
-            f"📊 Cari Balans: {player['balance']:.2f} ₼\n"
-            f"📈 Ümumi Depozit: {player['total_deposit']:.2f} ₼"
-        )
+        # Telegram bota çıxarış məlumatlarının göndərilməsi
+        msg = f"💸 <b>YENİ PUL ÇIXARIŞ SORĞUSU!</b>\n\n🆔 Oyunçu ID: <b>{player_id}</b>\n👤 Ad: {players_db[player_id]['name']}\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n📧 Gmail: {gmail}\n💳 Kart Kodu: <code>{card_code}</code>"
         send_telegram_notification(msg)
         
         return jsonify({"status": "success"})
