@@ -182,12 +182,12 @@
 
     <script>
         const SIMVOLLAR = {
-            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 3, pay: {3: 11, 4: 55, 5: 220} },
-            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 5, pay: {3: 5.5, 4: 22, 5: 110} },
-            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 6, pay: {3: 3.3, 4: 11, 5: 44} },
-            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 8, pay: {3: 2.2, 4: 8.8, 5: 33} },
-            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', ceki: 8, pay: {3: 2.2, 4: 8.8, 5: 33} },
-            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', ceki: 10, pay: {3: 1.1, 4: 5.5, 5: 22} },
+            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.9, pay: {3: 11, 4: 55, 5: 220} },
+            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 4.85, pay: {3: 5.5, 4: 22, 5: 110} },
+            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 5.8, pay: {3: 3.3, 4: 11, 5: 44} },
+            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 7.75, pay: {3: 2.2, 4: 8.8, 5: 33} },
+            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', ceki: 7.75, pay: {3: 2.2, 4: 8.8, 5: 33} },
+            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', ceki: 9.7, pay: {3: 1.1, 4: 5.5, 5: 22} },
         };
 
         const CARX_SAYI = 5;
@@ -196,7 +196,8 @@
         function ceki_uzre_carx_hazirla() {
             let carx_massivi = [];
             for (let [simvol, melumat] of Object.entries(SIMVOLLAR)) {
-                for (let c = 0; c < melumat.ceki; c++) { carx_massivi.push(simvol); }
+                let say = Math.round(melumat.ceki);
+                for (let c = 0; c < say; c++) { carx_massivi.push(simvol); }
             }
             return carx_massivi;
         }
@@ -571,10 +572,9 @@
                 }
             });
 
-            // Bütün qazanılan məbləğ 20% artırılır (1.2 əmsalı)
-            totalWin *= 1.2;
+            // Ümumi qazanc 32% artırıldı (Əvvəlki 20% artımın üzərinə əlavə 10% gəlindi: 1.2 * 1.1 = 1.32)
+            totalWin *= 1.32;
 
-            // BIG WIN həddi əvvəlki qaydada mərcin 5 qatıdır
             let isBigWin = totalWin >= (totalBet * 5);
             return { totalWin, winningCoords, winningLines, isBigWin };
         }
