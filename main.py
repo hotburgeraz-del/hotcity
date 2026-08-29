@@ -29,7 +29,7 @@ def send_telegram_async(message):
     
     threading.Thread(target=send).start()
 
-# --- TƏKMİLLƏŞDİRİLMİŞ JSON BAZASI ---
+# --- JSON BAZASI ---
 DB_FILE = "players.json"
 
 def load_players():
@@ -62,9 +62,8 @@ def load_players():
                 if isinstance(data, dict):
                     return data
         except Exception as e:
-            print("Baza oxunma xətası, default yüklənir:", e)
+            print("Baza oxunma xətası:", e)
     
-    # Əgər fayl yoxdursa və ya xətalıdırsa, dərhal yenisini yarat
     try:
         with open(DB_FILE, "w", encoding="utf-8") as f:
             json.dump(default_players, f, ensure_ascii=False, indent=4)
@@ -82,7 +81,7 @@ def save_players():
 
 players_db = load_players()
 
-# --- XARİCİ KİBER TƏHLÜKƏSİZLİK QALXANI ---
+# --- KİBER TƏHLÜKƏSİZLİK QALXANI ---
 REQUEST_COUNTS = {}
 RATE_LIMIT_WINDOW = 1  
 MAX_REQUESTS_PER_SECOND = 15  
@@ -121,10 +120,15 @@ def add_security_headers(response):
 def home():
     return render_template('index.html')
 
+# Yoxlamaq üçün admin paneli birbaşa mətnyönümlü (və ya şablon xətası verilməyən) hala gətirdik:
 @app.route('/admin')
 @security_shield
 def admin_panel():
-    return render_template('gizli_panel.html', players=players_db.values())
+    try:
+        return render_template('gizli_panel.html', players=players_db.values())
+    except Exception as e:
+        # Əgər gizli_panel.html faylında problem olsa, səbəbi birbaşa ekrana çıxaracaq
+        return f"<h3>Admin Panel Şablon Xətası:</h3><p>{str(e)}</p><br><a href='/api/get_players'>Oyunçuların JSON siyahısına bax</a>"
 
 @app.route('/api/get_players', methods=['GET'])
 @security_shield
