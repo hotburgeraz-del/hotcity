@@ -34,7 +34,6 @@
                     <th>ID</th>
                     <th>Ad</th>
                     <th>Gmail</th>
-                    <th>Şifrə</th>
                     <th>Status</th>
                     <th>Son Görülmə</th>
                     <th>Balans</th>
@@ -48,7 +47,6 @@
                     <td><b>{{ player.id }}</b></td>
                     <td>{{ player.name }}</td>
                     <td>{{ player.email }}</td>
-                    <td><code>{{ player.code }}</code></td>
                     <td>
                         <span class="{% if 'Aktiv' in player.status %}status-online{% else %}status-offline{% endif %}">
                             {{ player.status }}
@@ -56,7 +54,7 @@
                     </td>
                     <td>{{ player.last_seen }}</td>
                     <td id="balance-{{ player.id }}">₼{{ "%.2f"|format(player.balance) }}</td>
-                    <td id="deposit-{{ player.id }}">₼{{ "%.2f"|format(player.total_deposit) }}</td>
+                    <td>₼{{ "%.2f"|format(player.total_deposit) }}</td>
                     <td>
                         <input type="number" id="input-{{ player.id }}" class="amount-input" placeholder="Məbləğ" step="1" min="1">
                         <button class="add-balance-btn" onclick="addBalance('{{ player.id }}')">Artır</button>
@@ -86,8 +84,9 @@
                 
                 let result = await response.json();
                 if (result.success) {
+                    alert(result.message);
                     inputField.value = '';
-                    updatePlayersTable();
+                    location.reload();
                 } else {
                     alert("Xəta: " + result.message);
                 }
@@ -96,24 +95,21 @@
             }
         }
 
-        async function updatePlayersTable() {
+        setInterval(async () => {
             try {
                 let response = await fetch('/api/get_players');
                 let players = await response.json();
                 
                 players.forEach(player => {
                     let balanceTd = document.getElementById(`balance-${player.id}`);
-                    let depositTd = document.getElementById(`deposit-${player.id}`);
-                    if (balanceTd) balanceTd.innerText = `₼${player.balance.toFixed(2)}`;
-                    if (depositTd) depositTd.innerText = `₼${player.total_deposit.toFixed(2)}`;
+                    if (balanceTd) {
+                        balanceTd.innerText = `₼${player.balance.toFixed(2)}`;
+                    }
                 });
             } catch (e) {
                 console.log("Canlı yenilənmə xətası:", e);
             }
-        }
-
-        // Hər 3 saniyədən bir paneli avtomatik yenilə
-        setInterval(updatePlayersTable, 3000);
+        }, 5000);
     </script>
 </body>
 </html>
