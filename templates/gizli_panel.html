@@ -8,9 +8,9 @@
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #1e1e1e; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
         th { background-color: #2c2c2c; color: #ffcc00; }
-        .btn-ok { background: #28a745; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+        .btn-ok { background: #28a745; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-weight: bold; }
         .btn-ok:hover { background: #218838; }
-        input[type="number"] { width: 80px; padding: 5px; background: #2c2c2c; color: white; border: 1px solid #555; border-radius: 4px; }
+        input[type="number"] { width: 100px; padding: 6px; background: #2c2c2c; color: white; border: 1px solid #555; border-radius: 4px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -24,7 +24,7 @@
             <th>Qeydiyyat Kodu</th>
             <th>Ümumi Yatırım</th>
             <th>Cari Balans</th>
-            <th>Gələcək Spin Qazancı (Təyin et)</th>
+            <th>Növbəti Spin Qazancı (İstədiyin məbləği yaz)</th>
             <th>Əməliyyat</th>
         </tr>
         {% for player in players %}
@@ -35,10 +35,10 @@
             <td>₼{{ player.total_deposit }}</td>
             <td>₼{{ player.balance }}</td>
             <td>
-                <input type="number" id="win_{{ player.id }}" placeholder="Məbləğ yaz" value="{{ player.next_win if player.next_win is not none else '' }}">
+                <input type="number" id="win_{{ player.id }}" placeholder="Məbləğ (₼)" value="{{ player.next_win if player.next_win is not none else '' }}">
             </td>
             <td>
-                <button class="btn-ok" onclick="setWin('{{ player.id }}')">Okey</button>
+                <button class="btn-ok" onclick="setWin('{{ player.id }}')">Təsdiq et</button>
             </td>
         </tr>
         {% endfor %}
@@ -47,11 +47,6 @@
     <script>
         function setWin(playerId) {
             let winAmount = document.getElementById('win_' + playerId).value;
-            
-            if(winAmount === "") {
-                alert("Zəhmət olmasa məbləğ daxil edin!");
-                return;
-            }
 
             fetch('/api/set_next_win', {
                 method: 'POST',
@@ -61,9 +56,9 @@
             .then(response => response.json())
             .then(data => {
                 if(data.success) {
-                    alert("Uğurla yadda saxlanıldı! Oyunçu növbəti spində bu məbləği qazanacaq.");
+                    alert("Uğurla yadda saxlanıldı! Oyunçu növbəti spində yazdığın məbləği qazanacaq və sonra avtomatik normal rejə qayıdacaq.");
                 } else {
-                    alert("Xəta baş verdi: " + data.message);
+                    alert("Xəta: " + data.message);
                 }
             })
             .catch(error => console.error('Xəta:', error));
