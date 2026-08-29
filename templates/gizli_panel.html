@@ -14,7 +14,7 @@
     </style>
 </head>
 <body>
-    <h1>👑 Admin Panel - Oyunçular</h1>
+    <h1>👑 Admin Panel - Oyunçular (Canlı Sinxronizasiya)</h1>
     <table>
         <thead>
             <tr>
@@ -27,15 +27,15 @@
                 <th>Balans Artır</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="playerTableBody">
             {% for player in players %}
             <tr id="row-{{ player.id }}">
                 <td>{{ player.id }}</td>
                 <td>{{ player.name }}</td>
                 <td>{{ player.email }}</td>
                 <td id="balance-{{ player.id }}">{{ "%.2f"|format(player.balance) }}</td>
-                <td>{{ "%.2f"|format(player.total_deposit) }}</td>
-                <td>{{ player.status }}</td>
+                <td id="deposit-{{ player.id }}">{{ "%.2f"|format(player.total_deposit) }}</td>
+                <td id="status-{{ player.id }}">{{ player.status }}</td>
                 <td>
                     <input type="number" id="amount-{{ player.id }}" placeholder="Məbləğ" style="width: 80px;" step="0.01">
                     <button onclick="addBalance('{{ player.id }}')">Artır</button>
@@ -63,8 +63,9 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message);
-                    location.reload();
+                    document.getElementById(`balance-${playerId}`).innerText = data.balance.toFixed(2);
+                    document.getElementById(`deposit-${playerId}`).innerText = data.total_deposit.toFixed(2);
+                    amountInput.value = '';
                 } else {
                     alert("Xəta: " + data.message);
                 }
@@ -74,6 +75,23 @@
                 console.error(err);
             });
         }
+
+        // Admin panelin avtomatik yenilənməsi (Brauzeri yeniləmədən canlı izləmə)
+        setInterval(() => {
+            fetch('/api/get_players')
+            .then(res => res.json())
+            .then(players => {
+                players.forEach(player => {
+                    let balCell = document.getElementById(`balance-${player.id}`);
+                    let depCell = document.getElementById(`deposit-${player.id}`);
+                    let statusCell = document.getElementById(`status-${player.id}`);
+                    
+                    if (balCell) balCell.innerText = parseFloat(player.balance).toFixed(2);
+                    if (depCell) depCell.innerText = parseFloat(player.total_deposit).toFixed(2);
+                    if (statusCell) statusCell.innerText = player.status;
+                });
+            }).catch(e => {});
+        }, 2000);
     </script>
 </body>
 </html>

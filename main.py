@@ -3,13 +3,14 @@ import time
 import json
 import requests
 import threading
+import re
 from flask import Flask, render_template, request, jsonify, abort
 from functools import wraps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(32)
 
-# --- TELEGRAM BOT MƏLUMATLARI (Yeni Token) ---
+# --- TELEGRAM BOT MƏLUMATLARI ---
 TELEGRAM_BOT_TOKEN = "8502614066:AAGW5sB1ItogSYi7mBGRmbZUZNvu_4tvw_I"
 TELEGRAM_CHAT_ID = "7953669834"
 
@@ -22,53 +23,26 @@ def send_telegram_async(message):
                 "text": message,
                 "parse_mode": "HTML"
             }
-            response = requests.post(url, json=payload, timeout=10)
-            print("Telegram cavabı:", response.status_code, response.text)
+            requests.post(url, json=payload, timeout=10)
         except Exception as e:
             print("Telegram xətası:", e)
     
     threading.Thread(target=send).start()
 
-# --- ÖMÜRLÜK JSON BAZASI (Silinməz yaddaş) ---
+# --- ÖMÜRLÜK JSON BAZASI ---
 DB_FILE = "players.json"
 
 def load_players():
-    default_players = {
-        "HOT_1106": {
-            "id": "HOT_1106",
-            "name": "Alexs Aliyev",
-            "email": "aliyevalexs23@gmail.com",
-            "code": "PASS483",
-            "status": "Oflayn",
-            "last_seen": "15:00:12",
-            "balance": 0.00,
-            "total_deposit": 0.00
-        }
-    }
-    
-    data = default_players
+    default_players = {}
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
                 loaded = json.load(f)
-                if isinstance(loaded, dict) and len(loaded) > 0:
-                    data = loaded
+                if isinstance(loaded, dict):
+                    default_players = loaded
         except Exception:
             pass
-            
-    # Hər bir oyunçunun məlumatlarını qoruyuruq və əskik sahələri tamamlayırıq
-    for pid, pdata in data.items():
-        if not isinstance(pdata, dict):
-            continue
-        pdata.setdefault("total_deposit", 0.00)
-        pdata.setdefault("balance", 0.00)
-        pdata.setdefault("status", "Oflayn")
-        pdata.setdefault("last_seen", "00:00:00")
-        pdata.setdefault("code", "PASS123")
-        pdata.setdefault("email", "qonaq@gmail.com")
-        pdata.setdefault("name", "Oyunçu")
-        
-    return data
+    return default_players
 
 def save_players():
     try:
@@ -79,10 +53,10 @@ def save_players():
 
 players_db = load_players()
 
-# --- TƏHLÜKƏSİZLİK QALXANI ---
+# --- GÜCLÜ KİBER QALXAN & RATE LIMITER ---
 REQUEST_COUNTS = {}
 RATE_LIMIT_WINDOW = 1  
-MAX_REQUESTS_PER_SECOND = 20  
+MAX_REQUESTS_PER_SECOND = 30  
 
 def security_shield(f):
     @wraps(f)
@@ -97,12 +71,21 @@ def security_shield(f):
             if current_time - data['start_time'] < RATE_LIMIT_WINDOW:
                 data['count'] += 1
                 if data['count'] > MAX_REQUESTS_PER_SECOND:
-                    abort(429, description="Çoxlu sorğu.")
+                    abort(429, description="Çoxlu sorğu - Kiber müdafiə aktivdir.")
             else:
                 REQUEST_COUNTS[ip] = {'count': 1, 'start_time': current_time}
                 
         return f(*args, **kwargs)
     return decorated_function
+
+def generate_unique_id():
+    import random, string
+    while True:
+        letter = random.choice(string.ascii_uppercase)
+        numbers = ''.join(random.choices(string.digits, k=6))
+        new_id = f"{letter}{numbers}"
+        if new_id not in players_db:
+            return new_id
 
 @app.route('/')
 @security_shield
@@ -110,7 +93,7 @@ def home():
     try:
         return render_template('index.html')
     except Exception as e:
-        return f"Ana səhifə şablon xətası: {e}", 500
+        return f"Ana səhifə xətası: {e}", 500
 
 @app.route('/admin')
 @security_shield
@@ -140,54 +123,51 @@ def add_balance():
             players_db[player_id]['balance'] += val
             players_db[player_id]['total_deposit'] += val
             save_players()
-            return jsonify({"success": True, "message": "Uğurla əlavə edildi!"})
+            return jsonify({"success": True, "message": "Uğurla əlavə edildi!", "balance": players_db[player_id]['balance'], "total_deposit": players_db[player_id]['total_deposit']})
         except (ValueError, TypeError):
             return jsonify({"success": False, "message": "Yanlış məbləğ!"}), 400
             
     return jsonify({"success": False, "message": "Tapılmadı!"}), 404
 
-# --- GİRİŞ (LOGIN) - Həmçinin Telegram-a xəbər verir və ömürlük yadda saxlayır ---
 @app.route('/login', methods=['POST'])
 @security_shield
 def login():
     data = request.json or {}
-    player_id = data.get('playerId')
+    gmail = data.get('gmail', '').strip().lower()
+    player_id = data.get('playerId', '').strip()
     
-    if not player_id:
-        player_id = "HOT_" + str(int.from_bytes(os.urandom(2), "big"))
-        
-    if player_id not in players_db:
-        players_db[player_id] = {
-            "id": player_id,
-            "name": "Oyunçu",
-            "email": "qonaq@gmail.com",
-            "code": "PASS123",
-            "status": "Onlayn (Aktiv)",
-            "last_seen": time.strftime("%H:%M:%S"),
-            "balance": 0.00,
-            "total_deposit": 0.00
-        }
-    else:
-        players_db[player_id]['status'] = "Onlayn (Aktiv)"
-        players_db[player_id]['last_seen'] = time.strftime("%H:%M:%S")
-        
-    # Ömürlük fayla yazırıq
-    save_players()
-    
-    # Telegram-a bildiririk ki, oyunçu onlayn oldu
-    msg = f"🟢 <b>OYUNÇU ONLAYN OLDU / GİRİŞ ETDİ!</b>\n\n🆔 ID: <b>{player_id}</b>\n👤 Ad: {players_db[player_id]['name']}\n💰 Balans: {players_db[player_id]['balance']} ₼"
-    send_telegram_async(msg)
-    
-    return jsonify({"status": "success", "playerId": player_id, "balance": players_db[player_id]['balance']})
+    for pid, pdata in players_db.items():
+        if pdata.get('email', '').lower() == gmail or pid == player_id:
+            pdata['status'] = "Onlayn (Aktiv)"
+            pdata['last_seen'] = time.strftime("%H:%M:%S")
+            save_players()
+            return jsonify({
+                "status": "success", 
+                "playerId": pid, 
+                "balance": pdata['balance'],
+                "total_deposit": pdata.get('total_deposit', 0.00),
+                "name": pdata['name'],
+                "gmail": pdata['email']
+            })
+            
+    return jsonify({"status": "error", "message": "Bu Gmail və ya ID ilə qeydiyyat tapılmadı!"}), 404
 
-# --- QEYDİYYAT (AUTH) - Ömürlük yaddaş ---
 @app.route('/auth', methods=['POST'])
 @security_shield
 def auth():
     data = request.json or {}
-    name = data.get('name', 'Qonaq')
-    email = data.get('gmail', 'qonaq@gmail.com')
-    new_id = "HOT_" + str(int.from_bytes(os.urandom(2), "big"))
+    name = data.get('name', 'Qonaq').strip()
+    email = data.get('gmail', '').strip().lower()
+    
+    if not email or '@' not in email:
+        return jsonify({"status": "error", "message": "Etibarlı Gmail daxil edin!"}), 400
+        
+    # 1 Gmail yalnız 1 dəfə qeydiyyatda ola bilər
+    for pid, pdata in players_db.items():
+        if pdata.get('email', '').lower() == email:
+            return jsonify({"status": "error", "message": "Bu Gmail artıq sistemdə qeydiyyatdadır!"}), 400
+            
+    new_id = generate_unique_id()
     
     players_db[new_id] = {
         "id": new_id, 
@@ -200,13 +180,12 @@ def auth():
         "total_deposit": 0.00
     }
     
-    # Ömürlük yaddaşa yazırıq ki, silinməsin
     save_players()
     
     msg = f"✨ <b>YENİ OYUNÇU QEYDİYYATI (ÖMÜRLÜK YADDAŞ)!</b>\n\n🆔 ID: <b>{new_id}</b>\n👤 Ad: {name}\n📧 Email: {email}"
     send_telegram_async(msg)
     
-    return jsonify({"status": "success", "playerId": new_id, "balance": 0.00})
+    return jsonify({"status": "success", "playerId": new_id, "balance": 0.00, "total_deposit": 0.00})
 
 @app.route('/update_balance', methods=['POST'])
 @security_shield
@@ -220,52 +199,41 @@ def update_balance():
             players_db[player_id]['status'] = "Onlayn (Aktiv)"
             players_db[player_id]['last_seen'] = time.strftime("%H:%M:%S")
             save_players()
-            return jsonify({"status": "success"})
+            return jsonify({"status": "success", "balance": players_db[player_id]['balance']})
         except ValueError:
             pass
     return jsonify({"status": "error"})
 
-# --- PUL ÇIXARIŞI ---
 @app.route('/withdraw', methods=['POST'])
 @security_shield
 def withdraw():
     data = request.json or {}
     player_id = data.get('playerId')
     amount = data.get('amount')
-    gmail = data.get('gmail', 'Qeyd olunmayıb')
-    card_code = data.get('cardCode', 'Qeyd olunmayıb')
+    gmail = data.get('gmail', '')
+    card_code = data.get('cardCode', '')
     
     try:
         amount = float(amount)
     except (ValueError, TypeError):
         return jsonify({"status": "error", "message": "Yanlış məbləğ"})
         
-    if not player_id:
-        player_id = "HOT_GUEST"
-        
-    # Əgər oyunçu bazada yoxdursa, avtomatik yaradıb ömürlük yaddaşa əlavə edirik
     if player_id not in players_db:
-        players_db[player_id] = {
-            "id": player_id,
-            "name": "Oyunçu",
-            "email": gmail,
-            "code": "PASS123",
-            "status": "Onlayn",
-            "last_seen": time.strftime("%H:%M:%S"),
-            "balance": amount + 100.0, 
-            "total_deposit": 0.00
-        }
+        return jsonify({"status": "error", "message": "Oyunçu tapılmadı"})
         
     player = players_db[player_id]
-    player.setdefault('balance', 0.00)
+    total_deposit = player.get('total_deposit', 0.00)
+    max_allowed_withdraw = total_deposit * 2.50 # 10 manat yatırıbsa 150% artırıb 25 manat edə bilər
     
+    if amount > max_allowed_withdraw:
+        return jsonify({"status": "error", "message": f"Bu qədər çıxara bilərsiniz: {max_allowed_withdraw:.2f} ₼ (Yatırımın +150% həddi)"})
+        
     if player['balance'] < amount:
-        player['balance'] = amount + 50.0  
+        return jsonify({"status": "error", "message": "Balansınız kifayət etmir!"})
         
     player['balance'] -= amount
-    save_players() # Dəyişikliyi ömürlük yaddaşda qeyd edirik
+    save_players()
     
-    # Telegram-a dərhal çıxariş bildirişi göndəririk
     msg = f"💸 <b>PUL ÇIXARIŞI TƏLƏBİ!</b>\n\n🆔 ID: <b>{player_id}</b>\n👤 Ad: {player['name']}\n📧 Gmail: {gmail}\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n💳 Kart: <code>{card_code}</code>"
     send_telegram_async(msg)
     

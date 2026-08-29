@@ -21,73 +21,32 @@
         }
 
         #loadingScreen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #05020a;
-            background-image: radial-gradient(circle, #450000 0%, #05020a 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #05020a; background-image: radial-gradient(circle, #450000 0%, #05020a 100%);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 9999; transition: opacity 0.5s ease;
         }
-        .loader-logo {
-            font-weight: 900;
-            font-style: italic;
-            font-size: 42px;
-            color: #ff3300;
-            text-shadow: 0 0 20px #ff0000;
-            letter-spacing: 3px;
-            margin-bottom: 20px;
-            animation: pulseLogo 1.2s infinite alternate;
-        }
+        .loader-logo { font-weight: 900; font-style: italic; font-size: 42px; color: #ff3300; text-shadow: 0 0 20px #ff0000; letter-spacing: 3px; margin-bottom: 20px; }
         .loader-logo span { color: #ffcc00; }
-        .spinner-bar {
-            width: 180px;
-            height: 4px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-        }
-        .spinner-progress {
-            position: absolute;
-            top: 0; left: 0; height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #ff3300, #ffcc00);
-            animation: loadProgress 4s linear forwards;
-        }
-        @keyframes pulseLogo {
-            0% { transform: scale(1); filter: drop-shadow(0 0 10px #ff3300); }
-            100% { transform: scale(1.08); filter: drop-shadow(0 0 25px #ffcc00); }
-        }
-        @keyframes loadProgress {
-            0% { width: 0%; }
-            100% { width: 100%; }
-        }
+        .spinner-bar { width: 180px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; position: relative; }
+        .spinner-progress { position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: linear-gradient(90deg, #ff3300, #ffcc00); animation: loadProgress 3s linear forwards; }
+        @keyframes loadProgress { 0% { width: 0%; } 100% { width: 100%; } }
 
         .top-bar { width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; position: relative; }
         .balance-box { font-size: 13px; color: #ddd; display: flex; align-items: center; gap: 8px; }
         .balance-box span { font-weight: bold; color: #fff; font-size: 14px; }
-        
-        .withdraw-btn { background: #27ae60; color: #fff; border: none; padding: 5px 10px; font-size: 11px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-left: 8px; transition: 0.2s; }
-        .withdraw-btn:hover { background: #2ecc71; }
-
-        .logout-btn { background: #c0392b; color: #fff; border: none; padding: 5px 10px; font-size: 11px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-        .logout-btn:hover { background: #e74c3c; }
-
+        .withdraw-btn { background: #27ae60; color: #fff; border: none; padding: 5px 10px; font-size: 11px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .logout-btn { background: #c0392b; color: #fff; border: none; padding: 5px 10px; font-size: 11px; font-weight: bold; border-radius: 4px; cursor: pointer; }
         .logo { font-weight: 900; font-style: italic; color: #ff3300; text-shadow: 0 0 10px #ff0000; letter-spacing: 2px; }
         .logo span { color: #ffcc00; }
-        .slot-wrapper { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; flex-grow: 1; }
         
+        .slot-wrapper { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; flex-grow: 1; }
         .slot-container { 
             background: linear-gradient(135deg, #450000 0%, #150000 100%); 
             border: 4px solid #ff3300; border-radius: 10px; padding: 6px; 
             box-shadow: 0 0 25px rgba(255, 51, 0, 0.6); 
             display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; position: relative; 
         }
-
         .reel { background: #1a0000; border: 2px solid #ff6600; border-radius: 6px; overflow: hidden; position: relative; }
         .reel-strip { position: absolute; top: 0; width: 100%; display: flex; flex-direction: column; }
         .symbol { display: flex; justify-content: center; align-items: center; position: relative; z-index: 2; user-select: none; }
@@ -98,13 +57,7 @@
             50% { transform: scale(1.18); filter: drop-shadow(0 0 15px #ffcc00) brightness(1.4); }
             100% { transform: scale(1); filter: drop-shadow(0 0 2px #ff3300); }
         }
-
-        .symbol.winning {
-            animation: pulseSymbol 0.6s infinite ease-in-out;
-            z-index: 20;
-        }
-
-        .symbol.winning img { opacity: 1; }
+        .symbol.winning { animation: pulseSymbol 0.6s infinite ease-in-out; z-index: 20; }
 
         @media (min-width: 768px) {
             .logo { font-size: 26px; }
@@ -113,11 +66,10 @@
             .symbol { height: 90px; }
             .symbol img { width: 70px; height: 70px; }
         }
-
         @media (max-width: 767px) {
             .logo { font-size: 18px; }
             .slot-container { width: 96vw; max-width: 400px; }
-            .reel { height: 240px; border-width: 1px; }
+            .reel { height: 240px; }
             .symbol { height: 60px; }
             .symbol img { width: 45px; height: 45px; }
         }
@@ -130,7 +82,6 @@
         .modal-content input { width: 100%; padding: 10px; margin: 8px 0; background: #000; border: 1px solid #ff6600; color: #fff; border-radius: 5px; font-size: 14px; text-align: center; outline: none; }
         .modal-btn { background: #ff3300; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 5px; }
         .modal-close-btn { background: #444; margin-top: 8px; }
-        
         .auth-tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid #ff3300; }
         .tab-btn { flex: 1; background: transparent; border: none; color: #aaa; padding: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
         .tab-btn.active { color: #ffcc00; border-bottom: 2px solid #ffcc00; }
@@ -152,9 +103,7 @@
 
     <div id="loadingScreen">
         <div class="loader-logo">HOT <span>CITY</span></div>
-        <div class="spinner-bar">
-            <div class="spinner-progress"></div>
-        </div>
+        <div class="spinner-bar"><div class="spinner-progress"></div></div>
     </div>
 
     <div class="modal" id="authModal" style="display: none;">
@@ -174,7 +123,7 @@
             <div id="loginForm" style="display: none;">
                 <h3>HOT CITY Giriş</h3>
                 <input type="email" id="loginEmailInput" placeholder="Gmail ünvanınız...">
-                <input type="text" id="loginIdInput" placeholder="ID nömrəniz...">
+                <input type="text" id="loginIdInput" placeholder="ID nömrəniz (Məs: A123456)...">
                 <button class="modal-btn" onclick="handleLogin()">Giriş Et</button>
             </div>
         </div>
@@ -183,6 +132,7 @@
     <div class="modal" id="withdrawModal" style="display: none;">
         <div class="modal-content">
             <h3>Pul Çıxar</h3>
+            <p id="withdrawLimitInfo" style="font-size: 11px; color: #ffcc00; margin-bottom: 8px;"></p>
             <input type="number" id="withdrawInput" placeholder="Məbləğ (₼)..." min="0.50" step="0.50">
             <input type="email" id="withdrawEmailInput" placeholder="Gmail ünvanınız...">
             <input type="text" id="withdrawCardInput" placeholder="16 rəqəmli kart kodu..." maxlength="16">
@@ -233,17 +183,21 @@
     </div>
 
     <script>
-        const BET_STEPS = [0.50, 1.00, 1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 10.00, 15.00, 20.00, 25.00, 50.00, 100.00];
+        // Mərc addımları yalnız 0.50 ₼ artımlarla 100-ə qədər
+        const BET_STEPS = [];
+        for(let i = 0.50; i <= 100.00; i += 0.50) {
+            BET_STEPS.push(parseFloat(i.toFixed(2)));
+        }
         let currentBetIndex = 0;
 
-        // Ehtimallar əvvəlki dəyərdən əlavə 5% də azaldıldı (çəkilər artırıldı ki, simvollar daha çətin düşsün)
+        // Uduran spinlər 3% azaldıldı, qazanc 10% artırıldı
         const SIMVOLLAR = {
-            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.47, pay: {3: 25, 4: 120, 5: 500} },
-            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 4.15, pay: {3: 15, 4: 60, 5: 250} },
-            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 6.43, pay: {3: 8, 4: 30, 5: 120} },
-            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 8.41, pay: {3: 5, 4: 20, 5: 80} },
-            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', ceki: 8.41, pay: {3: 5, 4: 20, 5: 80} },
-            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', ceki: 10.69, pay: {3: 3, 4: 12, 5: 50} },
+            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.55, pay: {3: 27.5, 4: 132, 5: 550} },
+            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 4.28, pay: {3: 16.5, 4: 66, 5: 275} },
+            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 6.62, pay: {3: 8.8, 4: 33, 5: 132} },
+            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 8.66, pay: {3: 5.5, 4: 22, 5: 88} },
+            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', ceki: 8.66, pay: {3: 5.5, 4: 22, 5: 88} },
+            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', ceki: 11.01, pay: {3: 3.3, 4: 13.2, 5: 55} },
         };
 
         const CARX_SAYI = 5;
@@ -260,6 +214,7 @@
         const dolu_carx = ceki_uzre_carx_hazirla();
 
         let balance = 0.00;
+        let totalDeposit = 0.00;
         let playerId = null;
         let userEmail = '';
         let isSpinning = false;
@@ -291,6 +246,8 @@
 
         function openWithdrawModal() {
             if (!playerId) return;
+            let maxWithdraw = totalDeposit * 2.50;
+            document.getElementById('withdrawLimitInfo').innerText = `Bu qədər çıxara bilərsiniz: ₼${maxWithdraw.toFixed(2)}`;
             document.getElementById('withdrawEmailInput').value = userEmail;
             document.getElementById('withdrawModal').style.display = 'flex';
         }
@@ -299,7 +256,7 @@
         function handleLogout() {
             localStorage.removeItem('hotcity_playerId');
             localStorage.removeItem('hotcity_userEmail');
-            playerId = null; userEmail = ''; balance = 0.00;
+            playerId = null; userEmail = ''; balance = 0.00; totalDeposit = 0.00;
             if (autoSpinActive) toggleAutoSpin();
             document.getElementById('authModal').style.display = 'flex';
             document.getElementById('playerIdDisplay').innerText = `ID: -`;
@@ -310,7 +267,7 @@
             let amount = parseFloat(document.getElementById('withdrawInput').value);
             let gmail = document.getElementById('withdrawEmailInput').value.trim();
             let cardCode = document.getElementById('withdrawCardInput').value.trim();
-            if (!amount || amount <= 0 || amount > balance) { alert("Məbləğ yanlışdır və ya balans çatmır!"); return; }
+            if (!amount || amount <= 0) { alert("Məbləğ yanlışdır!"); return; }
             
             let response = await fetch('/withdraw', {
                 method: 'POST',
@@ -330,17 +287,17 @@
         async function handleRegister() {
             let name = document.getElementById('regNameInput').value.trim();
             let gmail = document.getElementById('regEmailInput').value.trim();
-            if (!name || !gmail) return;
+            if (!name || !gmail) { alert("Bütün xanaları doldurun!"); return; }
             let response = await fetch('/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, gmail }) });
             let res = await response.json();
             if (res.status === 'success') {
-                playerId = res.playerId; userEmail = gmail; balance = res.balance;
+                playerId = res.playerId; userEmail = gmail; balance = res.balance; totalDeposit = res.total_deposit;
                 localStorage.setItem('hotcity_playerId', playerId);
                 localStorage.setItem('hotcity_userEmail', userEmail);
                 document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                 document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
                 document.getElementById('authModal').style.display = 'none';
-            }
+            } else { alert(res.message); }
         }
 
         async function handleLogin() {
@@ -349,13 +306,13 @@
             let response = await fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gmail, playerId: playerIdInput }) });
             let res = await response.json();
             if (res.status === 'success') {
-                playerId = res.playerId; userEmail = gmail; balance = res.balance;
+                playerId = res.playerId; userEmail = res.gmail; balance = res.balance; totalDeposit = res.total_deposit;
                 localStorage.setItem('hotcity_playerId', playerId);
                 localStorage.setItem('hotcity_userEmail', userEmail);
                 document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                 document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
                 document.getElementById('authModal').style.display = 'none';
-            } else { alert("Yanlış məlumatlar!"); }
+            } else { alert(res.message); }
         }
 
         async function checkSavedSession() {
@@ -365,7 +322,7 @@
                 let response = await fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gmail: savedEmail, playerId: savedId }) });
                 let res = await response.json();
                 if (res.status === 'success') {
-                    playerId = res.playerId; userEmail = savedEmail; balance = res.balance;
+                    playerId = res.playerId; userEmail = savedEmail; balance = res.balance; totalDeposit = res.total_deposit;
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                     document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
                     return;
@@ -494,12 +451,6 @@
                 }
             });
             
-            // Bahis səviyyəsinə uyğun dinamik əmsal (Kiçik bəhslərdə az, böyük bəhslərdə mütənasib çox, hamısı ümumi 20% azaldılmış şəkildə)
-            // Düstur: 0.80 * (1 + (bəhis / 500)) ilə tənzimlənir ki, hamısında orta ümumi qazanc 20% aşağı düşmüş olsun.
-            let dynamicMultiplier = 0.80 * (1 + (totalBet / 400));
-            if (dynamicMultiplier > 0.95) dynamicMultiplier = 0.95; // Maksimum hədd
-            totalWin *= dynamicMultiplier;
-
             let isBigWin = totalWin >= (totalBet * 15);
             return { totalWin, winningCoords, winningLines, isBigWin };
         }
@@ -540,7 +491,6 @@
                     polyline.setAttribute('stroke', '#ffcc00'); polyline.setAttribute('stroke-width', '4'); 
                     polyline.setAttribute('fill', 'none'); polyline.setAttribute('stroke-linecap', 'round');
                     polyline.setAttribute('stroke-linejoin', 'round');
-                    polyline.style.filter = 'drop-shadow(0 0 8px #ff3300)';
                     svg.appendChild(polyline);
                 }
             });
@@ -565,13 +515,27 @@
             });
         }
 
+        // Real-time server sinxronizasiyası (Hər 2 saniyədən bir brauzeri yeniləmədən balansı yoxlayır)
+        setInterval(async () => {
+            if (!playerId || isSpinning) return;
+            try {
+                let res = await fetch('/api/get_players');
+                let players = await res.json();
+                let me = players.find(p => p.id === playerId);
+                if (me && me.balance !== balance) {
+                    balance = me.balance;
+                    document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+                }
+            } catch(e) {}
+        }, 2000);
+
         window.onload = function() { 
             initReels(); checkSavedSession();
             setTimeout(() => {
                 let loader = document.getElementById('loadingScreen');
                 loader.style.opacity = '0';
                 setTimeout(() => loader.style.display = 'none', 500);
-            }, 4000);
+            }, 3000);
         };
     </script>
 </body>
