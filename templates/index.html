@@ -151,7 +151,6 @@
 </head>
 <body>
 
-    <!-- 4 Saniyəlik Loading Ekranı -->
     <div id="loadingScreen">
         <div class="loader-logo">HOT <span>CITY</span></div>
         <div class="spinner-bar">
@@ -168,7 +167,6 @@
             
             <div id="registerForm">
                 <h3>HOT CITY Qeydiyyat</h3>
-                <p style="font-size:12px; color:#aaa; margin-top:5px;">Yeni hesab yaratmaq üçün məlumatları daxil edin:</p>
                 <input type="text" id="regNameInput" placeholder="Adınız...">
                 <input type="email" id="regEmailInput" placeholder="Gmail ünvanınız...">
                 <button class="modal-btn" onclick="handleRegister()">Qeydiyyatdan Keç</button>
@@ -176,9 +174,8 @@
 
             <div id="loginForm" style="display: none;">
                 <h3>HOT CITY Giriş</h3>
-                <p style="font-size:12px; color:#aaa; margin-top:5px;">Gmail və ID nömrənizi daxil edin:</p>
                 <input type="email" id="loginEmailInput" placeholder="Gmail ünvanınız...">
-                <input type="text" id="loginIdInput" placeholder="ID nömrəniz (məs: HOT_1234)...">
+                <input type="text" id="loginIdInput" placeholder="ID nömrəniz...">
                 <button class="modal-btn" onclick="handleLogin()">Giriş Et</button>
             </div>
         </div>
@@ -187,7 +184,6 @@
     <div class="modal" id="withdrawModal" style="display: none;">
         <div class="modal-content">
             <h3>Pul Çıxar</h3>
-            <p style="font-size:12px; color:#aaa; margin-top:5px;">Məlumatları daxil edin:</p>
             <input type="number" id="withdrawInput" placeholder="Məbləğ (₼)..." min="0.50" step="0.50">
             <input type="email" id="withdrawEmailInput" placeholder="Gmail ünvanınız...">
             <input type="text" id="withdrawCardInput" placeholder="16 rəqəmli kart kodu..." maxlength="16">
@@ -238,18 +234,16 @@
     </div>
 
     <script>
-        // Bet addımları siyahısı
         const BET_STEPS = [0.50, 1.00, 2.00, 3.00, 4.00, 5.00, 10.00, 15.00, 20.00, 25.00, 50.00, 75.00, 100.00];
         let currentBetIndex = 1;
 
-        // Uduş əmsalları artırıldı (Oyunçular üçün daha sərfəli və balanslı hala gətirildi)
         const SIMVOLLAR = {
-            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.99, pay: {3: 25, 4: 120, 5: 500} },
-            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 5.0, pay: {3: 15, 4: 60, 5: 250} },
-            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 5.97, pay: {3: 8, 4: 30, 5: 120} },
-            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 7.98, pay: {3: 5, 4: 20, 5: 80} },
-            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', ceki: 7.98, pay: {3: 5, 4: 20, 5: 80} },
-            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', ceki: 9.99, pay: {3: 3, 4: 12, 5: 50} },
+            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.50, pay: {3: 25, 4: 120, 5: 500} },
+            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 4.20, pay: {3: 15, 4: 60, 5: 250} },
+            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 6.50, pay: {3: 8, 4: 30, 5: 120} },
+            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 8.50, pay: {3: 5, 4: 20, 5: 80} },
+            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', ceki: 8.50, pay: {3: 5, 4: 20, 5: 80} },
+            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', ceki: 10.80, pay: {3: 3, 4: 12, 5: 50} },
         };
 
         const CARX_SAYI = 5;
@@ -274,16 +268,9 @@
 
         function generateCleanPaylines() {
             return [
-                [0, 0, 0, 0, 0], 
-                [1, 1, 1, 1, 1], 
-                [2, 2, 2, 2, 2], 
-                [3, 3, 3, 3, 3], 
-                [0, 1, 2, 1, 0], 
-                [3, 2, 1, 2, 3], 
-                [0, 1, 1, 1, 0], 
-                [3, 2, 2, 2, 3], 
-                [1, 0, 0, 0, 1], 
-                [2, 3, 3, 3, 2]  
+                [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [2, 2, 2, 2, 2], [3, 3, 3, 3, 3], 
+                [0, 1, 2, 1, 0], [3, 2, 1, 2, 3], [0, 1, 1, 1, 0], [3, 2, 2, 2, 3], 
+                [1, 0, 0, 0, 1], [2, 3, 3, 3, 2]  
             ];
         }
         const PAYLINES = generateCleanPaylines();
@@ -307,18 +294,12 @@
             document.getElementById('withdrawEmailInput').value = userEmail;
             document.getElementById('withdrawModal').style.display = 'flex';
         }
-
-        function closeWithdrawModal() {
-            document.getElementById('withdrawModal').style.display = 'none';
-        }
+        function closeWithdrawModal() { document.getElementById('withdrawModal').style.display = 'none'; }
 
         function handleLogout() {
             localStorage.removeItem('hotcity_playerId');
             localStorage.removeItem('hotcity_userEmail');
-
-            playerId = null;
-            userEmail = '';
-            balance = 0.00;
+            playerId = null; userEmail = ''; balance = 0.00;
             if (autoSpinActive) toggleAutoSpin();
             document.getElementById('authModal').style.display = 'flex';
             document.getElementById('playerIdDisplay').innerText = `ID: -`;
@@ -329,157 +310,74 @@
             let amount = parseFloat(document.getElementById('withdrawInput').value);
             let gmail = document.getElementById('withdrawEmailInput').value.trim();
             let cardCode = document.getElementById('withdrawCardInput').value.trim();
-
-            if (!amount || amount <= 0) {
-                alert("Zəhmət olmasa düzgün məbləğ daxil edin!");
-                return;
-            }
-            if (amount > balance) {
-                alert("Balansınızda kifayət qədər vəsait yoxdur!");
-                return;
-            }
-            if (!gmail || !gmail.includes('@')) {
-                alert("Zəhmət olmasa düzgün Gmail daxil edin!");
-                return;
-            }
-            if (!cardCode || cardCode.length !== 16) {
-                alert("Zəhmət olmasa düzgün 16 rəqəmli kart kodu daxil edin!");
-                return;
-            }
-
-            try {
-                let response = await fetch('/withdraw', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ playerId, amount, gmail, cardCode })
-                });
-                let res = await response.json();
-                if (res.status === 'success') {
-                    balance -= amount;
-                    document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
-                    closeWithdrawModal();
-                    alert(`₼${amount.toFixed(2)} çıxarılması üçün sorğu göndərildi və bota bildirildi!`);
-                    await syncBalance();
-                } else {
-                    alert(res.message || "Xəta baş verdi!");
-                }
-            } catch (err) {
-                alert("Server xətası baş verdi!");
-            }
+            if (!amount || amount <= 0 || amount > balance) { alert("Məbləğ yanlışdır və ya balans çatmır!"); return; }
+            
+            let response = await fetch('/withdraw', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerId, amount, gmail, cardCode })
+            });
+            let res = await response.json();
+            if (res.status === 'success') {
+                balance -= amount;
+                document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+                closeWithdrawModal();
+                alert(`₼${amount.toFixed(2)} çıxarılması üçün sorğu göndərildi!`);
+                await syncBalance();
+            } else { alert(res.message); }
         }
 
         async function handleRegister() {
             let name = document.getElementById('regNameInput').value.trim();
             let gmail = document.getElementById('regEmailInput').value.trim();
-            if (!name || !gmail || !gmail.includes('@')) {
-                alert("Zəhmət olmasa ad və düzgün Gmail daxil edin!");
-                return;
-            }
-
-            try {
-                let response = await fetch('/auth', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, gmail })
-                });
-                let res = await response.json();
-                if (res.status === 'success') {
-                    playerId = res.playerId;
-                    userEmail = gmail;
-                    balance = res.balance;
-
-                    localStorage.setItem('hotcity_playerId', playerId);
-                    localStorage.setItem('hotcity_userEmail', userEmail);
-
-                    document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
-                    document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
-                    document.getElementById('authModal').style.display = 'none';
-                    setInterval(sendHeartbeat, 3000);
-                } else {
-                    alert(res.message);
-                }
-            } catch (err) {
-                alert("Server xətası baş verdi!");
+            if (!name || !gmail) return;
+            let response = await fetch('/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, gmail }) });
+            let res = await response.json();
+            if (res.status === 'success') {
+                playerId = res.playerId; userEmail = gmail; balance = res.balance;
+                localStorage.setItem('hotcity_playerId', playerId);
+                localStorage.setItem('hotcity_userEmail', userEmail);
+                document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+                document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
+                document.getElementById('authModal').style.display = 'none';
             }
         }
 
         async function handleLogin() {
             let gmail = document.getElementById('loginEmailInput').value.trim();
             let playerIdInput = document.getElementById('loginIdInput').value.trim();
-            if (!gmail || !gmail.includes('@') || !playerIdInput) {
-                alert("Zəhmət olmasa Gmail və ID nömrəsini daxil edin!");
-                return;
-            }
-
-            try {
-                let response = await fetch('/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ gmail, playerId: playerIdInput })
-                });
-                let res = await response.json();
-                if (res.status === 'success') {
-                    playerId = res.playerId;
-                    userEmail = gmail;
-                    balance = res.balance;
-
-                    localStorage.setItem('hotcity_playerId', playerId);
-                    localStorage.setItem('hotcity_userEmail', userEmail);
-
-                    document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
-                    document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
-                    document.getElementById('authModal').style.display = 'none';
-                    setInterval(sendHeartbeat, 3000);
-                } else {
-                    alert(res.message || "Məlumatlar yanlışdır!");
-                }
-            } catch (err) {
-                alert("Server xətası baş verdi!");
-            }
+            let response = await fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gmail, playerId: playerIdInput }) });
+            let res = await response.json();
+            if (res.status === 'success') {
+                playerId = res.playerId; userEmail = gmail; balance = res.balance;
+                localStorage.setItem('hotcity_playerId', playerId);
+                localStorage.setItem('hotcity_userEmail', userEmail);
+                document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+                document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
+                document.getElementById('authModal').style.display = 'none';
+            } else { alert("Yanlış məlumatlar!"); }
         }
 
         async function checkSavedSession() {
             let savedId = localStorage.getItem('hotcity_playerId');
             let savedEmail = localStorage.getItem('hotcity_userEmail');
-
             if (savedId && savedEmail) {
-                try {
-                    let response = await fetch('/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ gmail: savedEmail, playerId: savedId })
-                    });
-                    let res = await response.json();
-                    if (res.status === 'success') {
-                        playerId = res.playerId;
-                        userEmail = savedEmail;
-                        balance = res.balance;
-                        document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
-                        document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
-                        setInterval(sendHeartbeat, 3000);
-                        return;
-                    }
-                } catch (err) {
-                    console.error("Session restoration error:", err);
+                let response = await fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gmail: savedEmail, playerId: savedId }) });
+                let res = await response.json();
+                if (res.status === 'success') {
+                    playerId = res.playerId; userEmail = savedEmail; balance = res.balance;
+                    document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+                    document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
+                    return;
                 }
             }
             document.getElementById('authModal').style.display = 'flex';
-        }
-
-        async function sendHeartbeat() {
-            if (!playerId) return;
-            await fetch('/heartbeat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ playerId })
-            });
         }
 
         function changeBetStep(dir) {
             currentBetIndex += dir;
             if (currentBetIndex < 0) currentBetIndex = 0;
             if (currentBetIndex >= BET_STEPS.length) currentBetIndex = BET_STEPS.length - 1;
-            
             document.getElementById('betInput').value = BET_STEPS[currentBetIndex].toFixed(2);
         }
 
@@ -489,7 +387,7 @@
                 let html = '';
                 for (let j = 0; j < SETIR_SAYI; j++) {
                     let randKey = dolu_carx[Math.floor(Math.random() * dolu_carx.length)];
-                    html += `<div class="symbol" data-row="${j}" data-col="${i}"><img src="${SIMVOLLAR[randKey].img}" data-key="${randKey}"></div>`;
+                    html += `<div class="symbol"><img src="${SIMVOLLAR[randKey].img}"></div>`;
                 }
                 strip.innerHTML = html;
                 strip.style.top = '0px';
@@ -500,22 +398,15 @@
             autoSpinActive = !autoSpinActive;
             let autoBtn = document.getElementById('autoBtn');
             if (autoSpinActive) {
-                autoBtn.classList.add('active');
-                autoBtn.innerText = "STOP";
+                autoBtn.classList.add('active'); autoBtn.innerText = "STOP";
                 spinReels();
                 autoSpinInterval = setInterval(() => {
                     if (!autoSpinActive) return;
-                    let bet = BET_STEPS[currentBetIndex];
-                    if (balance < bet) {
-                        toggleAutoSpin();
-                        alert("Balans kifayət etmir!");
-                        return;
-                    }
+                    if (balance < BET_STEPS[currentBetIndex]) { toggleAutoSpin(); return; }
                     spinReels();
                 }, 1500);
             } else {
-                autoBtn.classList.remove('active');
-                autoBtn.innerText = "AUTO";
+                autoBtn.classList.remove('active'); autoBtn.innerText = "AUTO";
                 clearInterval(autoSpinInterval);
             }
         }
@@ -523,50 +414,38 @@
         async function spinReels() {
             if (isSpinning || !playerId) return;
             let bet = BET_STEPS[currentBetIndex];
-            if (balance < bet) {
-                if (autoSpinActive) toggleAutoSpin();
-                alert("Balans kifayət etmir!");
-                return;
-            }
+            if (balance < bet) { if (autoSpinActive) toggleAutoSpin(); alert("Balans kifayət etmir!"); return; }
 
             balance -= bet;
             document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
             isSpinning = true;
-            hideWin();
-            clearWinningSymbols();
-            clearWinLines();
+            hideWin(); clearWinningSymbols(); clearWinLines();
 
             let gridMatrix = [];
-
             for (let i = 0; i < CARX_SAYI; i++) {
                 const strip = document.getElementById(`strip${i}`);
-                let html = '';
-                let reelSymbols = [];
+                let html = '', reelSymbols = [];
                 for (let j = 0; j < 12; j++) {
                     let randKey = dolu_carx[Math.floor(Math.random() * dolu_carx.length)];
                     reelSymbols.push(randKey);
-                    html += `<div class="symbol"><img src="${SIMVOLLAR[randKey].img}" data-key="${randKey}"></div>`;
+                    html += `<div class="symbol"><img src="${SIMVOLLAR[randKey].img}"></div>`;
                 }
                 strip.innerHTML = html;
-                
                 let finalSymbols = reelSymbols.slice(reelSymbols.length - SETIR_SAYI);
                 gridMatrix.push(finalSymbols);
 
-                strip.style.transition = 'none';
-                strip.style.top = '0px';
-
+                strip.style.transition = 'none'; strip.style.top = '0px';
                 setTimeout(() => {
                     let symbolHeight = window.innerWidth >= 768 ? 90 : 60;
-                    let targetTop = -((reelSymbols.length - SETIR_SAYI) * symbolHeight);
                     strip.style.transition = `top 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)`;
-                    strip.style.top = `${targetTop}px`;
+                    strip.style.top = `${-((reelSymbols.length - SETIR_SAYI) * symbolHeight)}px`;
                 }, i * 100);
             }
 
             setTimeout(() => {
                 updateDOMGrid(gridMatrix);
-
                 let winData = calculateLinesWin(gridMatrix, bet);
+
                 if (winData.totalWin > 0) {
                     balance += winData.totalWin;
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
@@ -585,58 +464,39 @@
                 let html = '';
                 for (let row = 0; row < SETIR_SAYI; row++) {
                     let symKey = matrix[col][row];
-                    html += `<div class="symbol" data-row="${row}" data-col="${col}"><img src="${SIMVOLLAR[symKey].img}" data-key="${symKey}"></div>`;
+                    html += `<div class="symbol"><img src="${SIMVOLLAR[symKey].img}"></div>`;
                 }
                 strip.innerHTML = html;
-                strip.style.transition = 'none';
-                strip.style.top = '0px';
+                strip.style.transition = 'none'; strip.style.top = '0px';
             }
         }
 
         function calculateLinesWin(matrix, totalBet) {
-            let totalWin = 0;
-            let winningCoords = new Set();
-            let winningLines = [];
+            let totalWin = 0, winningCoords = new Set(), winningLines = [];
             let lineBet = totalBet / PAYLINES.length;
 
             PAYLINES.forEach(line => {
-                let matchSym = null;
-                let count = 0;
-                let currentCoords = [];
-
+                let matchSym = null, count = 0, currentCoords = [];
                 for (let col = 0; col < CARX_SAYI; col++) {
                     let sym = matrix[col][line[col]];
-
-                    if (matchSym === null) {
-                        if (sym !== 'WILD') {
-                            matchSym = sym;
-                        }
-                    }
-
+                    if (matchSym === null && sym !== 'WILD') matchSym = sym;
                     if (matchSym === null || sym === matchSym || sym === 'WILD') {
-                        count++;
-                        currentCoords.push([col, line[col]]);
-                        if (matchSym === null && sym === 'WILD' && col === CARX_SAYI - 1) {
-                            matchSym = 'LUCKY_7'; 
-                        }
-                    } else {
-                        break;
-                    }
+                        count++; currentCoords.push([col, line[col]]);
+                        if (matchSym === null && sym === 'WILD' && col === CARX_SAYI - 1) matchSym = 'LUCKY_7';
+                    } else { break; }
                 }
-
                 if (matchSym === null) matchSym = 'LUCKY_7';
-
-                if (count >= 3 && matchSym && SIMVOLLAR[matchSym] && SIMVOLLAR[matchSym].pay[count]) {
+                if (count >= 3 && SIMVOLLAR[matchSym]?.pay[count]) {
                     let lineWin = lineBet * SIMVOLLAR[matchSym].pay[count];
                     totalWin += lineWin;
                     winningLines.push(currentCoords);
                     currentCoords.forEach(coord => winningCoords.add(`${coord[0]}-${coord[1]}`));
                 }
             });
+            
+            totalWin *= 1.20; 
 
-            totalWin *= 1.20;
-
-            let isBigWin = totalWin >= (totalBet * 5);
+            let isBigWin = totalWin >= (totalBet * 15);
             return { totalWin, winningCoords, winningLines, isBigWin };
         }
 
@@ -646,43 +506,35 @@
                 const strip = document.getElementById(`strip${col}`);
                 if (strip) {
                     let symbolDivs = strip.getElementsByClassName('symbol');
-                    if (symbolDivs[row]) {
-                        symbolDivs[row].classList.add('winning');
-                    }
+                    if (symbolDivs[row]) symbolDivs[row].classList.add('winning');
                 }
             });
         }
 
         function drawWinningLines(lines) {
-            const svg = document.getElementById('winLinesSvg');
-            svg.innerHTML = '';
+            const svg = document.getElementById('winLinesSvg'); svg.innerHTML = '';
             const container = document.getElementById('slotContainer');
             const rect = container.getBoundingClientRect();
             
             lines.forEach(lineCoords => {
                 let points = [];
                 lineCoords.forEach(coord => {
-                    let col = coord[0];
-                    let row = coord[1];
-                    const strip = document.getElementById(`strip${col}`);
+                    const strip = document.getElementById(`strip${coord[0]}`);
                     if (strip) {
                         let symbolDivs = strip.getElementsByClassName('symbol');
-                        if (symbolDivs[row]) {
-                            let sRect = symbolDivs[row].getBoundingClientRect();
+                        if (symbolDivs[coord[1]]) {
+                            let sRect = symbolDivs[coord[1]].getBoundingClientRect();
                             let x = (sRect.left + sRect.width / 2) - rect.left;
                             let y = (sRect.top + sRect.height / 2) - rect.top;
                             points.push(`${x},${y}`);
                         }
                     }
                 });
-
                 if (points.length > 1) {
                     let polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
                     polyline.setAttribute('points', points.join(' '));
-                    polyline.setAttribute('stroke', '#ffcc00');
-                    polyline.setAttribute('stroke-width', '4');
-                    polyline.setAttribute('fill', 'none');
-                    polyline.setAttribute('stroke-linecap', 'round');
+                    polyline.setAttribute('stroke', '#ffcc00'); polyline.setAttribute('stroke-width', '4'); 
+                    polyline.setAttribute('fill', 'none'); polyline.setAttribute('stroke-linecap', 'round');
                     polyline.setAttribute('stroke-linejoin', 'round');
                     polyline.style.filter = 'drop-shadow(0 0 8px #ff3300)';
                     svg.appendChild(polyline);
@@ -690,46 +542,27 @@
             });
         }
 
-        function clearWinningSymbols() {
-            document.querySelectorAll('.symbol').forEach(el => el.classList.remove('winning'));
-        }
-
-        function clearWinLines() {
-            document.getElementById('winLinesSvg').innerHTML = '';
-        }
-
+        function clearWinningSymbols() { document.querySelectorAll('.symbol').forEach(el => el.classList.remove('winning')); }
+        function clearWinLines() { document.getElementById('winLinesSvg').innerHTML = ''; }
+        
         function showWin(amount, isBigWin) {
             let winDisplay = document.getElementById('winDisplay');
-            if (isBigWin) {
-                winDisplay.innerText = `BIG WIN! ₼${amount.toFixed(2)}`;
-            } else {
-                winDisplay.innerText = `WIN! ₼${amount.toFixed(2)}`;
-            }
+            winDisplay.innerText = isBigWin ? `BIG WIN! ₼${amount.toFixed(2)}` : `WIN! ₼${amount.toFixed(2)}`;
             winDisplay.style.opacity = '1';
         }
-
-        function hideWin() {
-            let winDisplay = document.getElementById('winDisplay');
-            winDisplay.style.opacity = '0';
-        }
+        function hideWin() { document.getElementById('winDisplay').style.opacity = '0'; }
 
         async function syncBalance() {
-            let getRes = await fetch('/get_data');
-            let allPlayers = await getRes.json();
-            if(allPlayers[playerId]) {
-                allPlayers[playerId].balance = balance;
-                await fetch('/save_data', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(allPlayers)
-                });
-            }
+            if (!playerId) return;
+            await fetch('/update_balance', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ playerId: playerId, balance: balance }) 
+            });
         }
 
         window.onload = function() { 
-            initReels(); 
-            checkSavedSession();
-
+            initReels(); checkSavedSession();
             setTimeout(() => {
                 let loader = document.getElementById('loadingScreen');
                 loader.style.opacity = '0';

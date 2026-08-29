@@ -2,7 +2,7 @@
 <html lang="az">
 <head>
     <meta charset="UTF-8">
-    <title>Gizli Admin Panel - Hot City</title>
+    <title>Gizli Admin İdarəetmə Paneli - Hot City</title>
     <style>
         body {
             background-color: #121212;
@@ -63,7 +63,7 @@
 </head>
 <body>
 
-    <h1>Gizli Admin İdarəetmə Paneli</h1>
+    <h1>Gizli Admin İdarəetmə Paneli (Real-Time)</h1>
     
     <table>
         <thead>
@@ -74,6 +74,7 @@
                 <th>Balans</th>
                 <th>Ümumi Depozit</th>
                 <th>Status</th>
+                <th>Son Görülmə</th>
                 <th>Balansı Artır</th>
             </tr>
         </thead>
@@ -84,8 +85,9 @@
                 <td>{{ player.name }}</td>
                 <td>{{ player.email }}</td>
                 <td id="bal_{{ player.id }}">{{ "%.2f"|format(player.balance) }} ₼</td>
-                <td>{{ "%.2f"|format(player.total_deposit) }} ₼</td>
+                <td id="dep_{{ player.id }}">{{ "%.2f"|format(player.total_deposit) }} ₼</td>
                 <td id="status_{{ player.id }}" class="{% if 'Onlayn' in player.status %}status-online{% else %}status-offline{% endif %}">{{ player.status }}</td>
+                <td id="seen_{{ player.id }}">{{ player.last_seen }}</td>
                 <td>
                     <input type="number" step="0.01" id="add_bal_{{ player.id }}" placeholder="Artır">
                     <button onclick="addBalance('{{ player.id }}')">Artır</button>
@@ -105,8 +107,10 @@
         }
 
         function addBalance(playerId) {
-            const amount = document.getElementById('add_bal_' + playerId).value;
+            const amountInput = document.getElementById('add_bal_' + playerId);
+            const amount = amountInput.value;
             if(!amount) return;
+            
             fetch('/api/add_balance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -116,30 +120,63 @@
             .then(data => {
                 showMessage(data.message);
                 if(data.success) {
-                    setTimeout(() => location.reload(), 1000);
+                    amountInput.value = '';
+                    // Səhifəni tam yeniləmədən dərhal məlumatları çəkirik ki, sistem donmasın/ilişib qalmasın
+                    fetchPlayersData();
                 }
             })
             .catch(err => console.error('Xəta:', err));
         }
 
-        // Statusu hər saniyə real vaxtda yenilə
-        setInterval(() => {
+        function fetchPlayersData() {
             fetch('/api/get_players')
             .then(res => res.json())
             .then(players => {
+                const tbody = document.getElementById('playerTableBody');
+                
                 players.forEach(p => {
-                    let statusTd = document.getElementById(`status_${p.id}`);
-                    let balTd = document.getElementById(`bal_${p.id}`);
-                    if(statusTd) {
-                        statusTd.innerText = p.status;
-                        statusTd.className = p.status.includes('Onlayn') ? 'status-online' : 'status-offline';
-                    }
-                    if(balTd) {
-                        balTd.innerText = parseFloat(p.balance).toFixed(2) + ' ₼';
+                    let row = document.getElementById(`row_${p.id}`);
+                    
+                    if (row) {
+                        // Əgər oyunçu artıq cədvəldə varsa, sadəcə dəyərləri yenilə (səhifə sıfırlanmır, ilişib qalmır)
+                        let balTd = document.getElementById(`bal_${p.id}`);
+                        let depTd = document.getElementById(`dep_${p.id}`);
+                        let statusTd = document.getElementById(`status_${p.id}`);
+                        let seenTd = document.getElementById(`seen_${p.id}`);
+                        
+                        if(balTd) balTd.innerText = parseFloat(p.balance).toFixed(2) + ' ₼';
+                        if(depTd) depTd.innerText = parseFloat(p.total_deposit).toFixed(2) + ' ₼';
+                        if(statusTd) {
+                            statusTd.innerText = p.status;
+                            statusTd.className = p.status.includes('Onlayn') ? 'status-online' : 'status-offline';
+                        }
+                        if(seenTd) seenTd.innerText = p.last_seen;
+                    } else {
+                        // Əgər yeni oyunçu qoşulubsa, cədvələ dinamik əlavə et
+                        let newRow = document.createElement('tr');
+                        newRow.id = `row_${p.id}`;
+                        newRow.innerHTML = `
+                            <td>${p.id}</td>
+                            <td>${p.name}</td>
+                            <td>${p.email}</td>
+                            <td id="bal_${p.id}">${parseFloat(p.balance).toFixed(2)} ₼</td>
+                            <td id="dep_${p.id}">${parseFloat(p.total_deposit).toFixed(2)} ₼</td>
+                            <td id="status_${p.id}" class="${p.status.includes('Onlayn') ? 'status-online' : 'status-offline'}">${p.status}</td>
+                            <td id="seen_${p.id}">${p.last_seen}</td>
+                            <td>
+                                <input type="number" step="0.01" id="add_bal_${p.id}" placeholder="Artır">
+                                <button onclick="addBalance('${p.id}')">Artır</button>
+                            </td>
+                        `;
+                        tbody.appendChild(newRow);
                     }
                 });
-            });
-        }, 1000);
+            })
+            .catch(err => console.error('Real-time yenilənmə xətası:', err));
+        }
+
+        // Hər 1 saniyədən bir heç bir səhifə sıfırlanması olmadan məlumatları avtomatik yenilə
+        setInterval(fetchPlayersData, 1000);
     </script>
 
 </body>
