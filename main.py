@@ -22,7 +22,8 @@ def send_telegram_async(message):
                 "text": message,
                 "parse_mode": "HTML"
             }
-            requests.post(url, json=payload, timeout=5)
+            response = requests.post(url, json=payload, timeout=10)
+            print("Telegram cavabı:", response.status_code, response.text)
         except Exception as e:
             print("Telegram xətası:", e)
     
