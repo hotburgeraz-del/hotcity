@@ -2,160 +2,73 @@
 <html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HOT CITY - Admin Control Panel</title>
+    <title>HOT CITY - İdarəetmə Paneli</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { background: #05020a; color: #fff; padding: 20px; }
-        h2 { color: #ffcc00; margin-bottom: 15px; }
-        .table-container { background: #1a0000; border: 2px solid #ff3300; border-radius: 8px; padding: 15px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; text-align: left; }
-        th, td { border: 1px solid #440000; padding: 10px; color: #ddd; }
-        th { background: #330000; color: #ffcc00; }
-        .refresh-btn { background: #ff3300; color: #fff; border: none; padding: 8px 16px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-bottom: 15px; }
-        .refresh-btn:hover { background: #ff5522; }
-        .action-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
-        .status-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-        .online { background-color: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
-        .offline { background-color: #e74c3c; box-shadow: 0 0 8px #e74c3c; }
-        .balance-btn { background: #27ae60; color: #fff; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 3px; font-size: 12px; }
-        .balance-btn.minus { background: #c0392b; }
-        .bonus-btn { background: #d35400; color: #fff; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; margin-top: 4px; display: inline-block; }
-        .bonus-btn:hover, .balance-btn:hover { opacity: 0.8; }
+        body { background-color: #121212; color: #fff; font-family: Arial, sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #1e1e1e; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
+        th { background-color: #2c2c2c; color: #ffcc00; }
+        .btn-ok { background: #28a745; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+        .btn-ok:hover { background: #218838; }
+        input[type="number"] { width: 80px; padding: 5px; background: #2c2c2c; color: white; border: 1px solid #555; border-radius: 4px; }
     </style>
 </head>
 <body>
 
     <h2>HOT CITY - Canlı Oyunçu və İdarəetmə Paneli</h2>
     
-    <div class="action-row">
-        <button class="refresh-btn" onclick="loadAdminData()">Siyahını Yenilə</button>
-    </div>
-
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Oyunçu ID</th>
-                    <th>Ad / Gmail</th>
-                    <th>Qeydiyyat Kodu (Şifrə)</th>
-                    <th>Aktivlik / Status</th>
-                    <th>Ümumi Yatırım</th>
-                    <th>Cari Balans</th>
-                    <th>Əməliyyatlar & Bonus Spin</th>
-                </tr>
-            </thead>
-            <tbody id="adminPlayersList">
-            </tbody>
-        </table>
-    </div>
+    <table>
+        <tr>
+            <th>Oyunçu ID</th>
+            <th>Ad / Gmail</th>
+            <th>Qeydiyyat Kodu</th>
+            <th>Ümumi Yatırım</th>
+            <th>Cari Balans</th>
+            <th>Gələcək Spin Qazancı (Təyin et)</th>
+            <th>Əməliyyat</th>
+        </tr>
+        {% for player in players %}
+        <tr>
+            <td>{{ player.id }}</td>
+            <td>{{ player.name }}<br><small>{{ player.email }}</small></td>
+            <td>{{ player.code }}</td>
+            <td>₼{{ player.total_deposit }}</td>
+            <td>₼{{ player.balance }}</td>
+            <td>
+                <input type="number" id="win_{{ player.id }}" placeholder="Məbləğ yaz" value="{{ player.next_win if player.next_win is not none else '' }}">
+            </td>
+            <td>
+                <button class="btn-ok" onclick="setWin('{{ player.id }}')">Okey</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
 
     <script>
-        async function loadAdminData() {
-            let tbody = document.getElementById('adminPlayersList');
-            try {
-                let response = await fetch('/get_data');
-                let allPlayers = await response.json();
-                tbody.innerHTML = '';
-
-                let keys = Object.keys(allPlayers);
-                if (keys.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#888;">Hələ heç bir oyunçu qeydiyyatdan keçməyib.</td></tr>`;
-                    return;
-                }
-
-                let now = Date.now();
-
-                keys.forEach(id => {
-                    let p = allPlayers[id];
-                    let lastSeen = p.last_active || 0;
-                    let isOnline = (now - lastSeen) < 5000; 
-                    
-                    let statusClass = isOnline ? 'online' : 'offline';
-                    let statusText = isOnline ? 'Onlayn (Aktiv)' : 'Oflayn';
-                    let timeStr = lastSeen ? new Date(lastSeen).toLocaleTimeString() : 'Naməlum';
-                    let totalDeposit = parseFloat(p.totalDeposit || 0).toFixed(2);
-
-                    let tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><b>${id}</b></td>
-                        <td><b>${p.name || ''}</b><br><small style="color:#aaa;">${p.gmail || ''}</small></td>
-                        <td style="color:#ffcc00; font-weight:bold; letter-spacing:1px;">${p.code || ''}</td>
-                        <td>
-                            <span class="status-dot ${statusClass}"></span>
-                            <b>${statusText}</b> <br><small style="color:#aaa;">Son: ${timeStr}</small>
-                        </td>
-                        <td style="color: #2ecc71; font-weight: bold;">₼${totalDeposit}</td>
-                        <td>₼${(parseFloat(p.balance) || 0).toFixed(2)}</td>
-                        <td>
-                            <div>
-                                <button class="balance-btn" onclick="updateBalance('${id}', 5)">+5 ₼</button>
-                                <button class="balance-btn minus" onclick="updateBalance('${id}', -5)">-5 ₼</button>
-                                <button class="balance-btn" onclick="updateBalance('${id}', 10)">+10 ₼</button>
-                                <button class="balance-btn minus" onclick="updateBalance('${id}', -10)">-10 ₼</button>
-                            </div>
-                            <div>
-                                <button class="bonus-btn" onclick="setForcedWin('${id}')">🎁 1,000 ₼ Spin Ver</button>
-                            </div>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (err) {
-                console.error("Məlumatı çəkmək mümkün olmadı:", err);
+        function setWin(playerId) {
+            let winAmount = document.getElementById('win_' + playerId).value;
+            
+            if(winAmount === "") {
+                alert("Zəhmət olmasa məbləğ daxil edin!");
+                return;
             }
-        }
 
-        async function updateBalance(playerId, amount) {
-            try {
-                let response = await fetch('/get_data');
-                let allPlayers = await response.json();
-                
-                if (allPlayers[playerId]) {
-                    let currentBal = parseFloat(allPlayers[playerId].balance) || 0;
-                    let newBal = currentBal + amount;
-                    if (newBal < 0) newBal = 0;
-                    allPlayers[playerId].balance = newBal;
-
-                    // Əgər məbləğ müsbətdirsə, həmçinin ümumi yatırıma da əlavə edək (məsələn, depozit simulyasiyası kimi)
-                    if (amount > 0) {
-                        let currentDep = parseFloat(allPlayers[playerId].totalDeposit || 0);
-                        allPlayers[playerId].totalDeposit = currentDep + amount;
-                    }
-
-                    await fetch('/save_data', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(allPlayers)
-                    });
-
-                    loadAdminData();
-                }
-            } catch (err) {
-                console.error("Balansı yeniləmək mümkün olmadı:", err);
-            }
-        }
-
-        async function setForcedWin(playerId) {
-            try {
-                let response = await fetch('/admin/set_forced_win', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ playerId })
-                });
-                let res = await response.json();
-                if (res.status === 'success') {
-                    alert(res.message);
+            fetch('/api/set_next_win', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ player_id: playerId, next_win: winAmount })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    alert("Uğurla yadda saxlanıldı! Oyunçu növbəti spində bu məbləği qazanacaq.");
                 } else {
-                    alert(res.message || "Xəta baş verdi!");
+                    alert("Xəta baş verdi: " + data.message);
                 }
-            } catch(e) {
-                alert("Sorğu göndərilərkən xəta baş verdi!");
-            }
+            })
+            .catch(error => console.error('Xəta:', error));
         }
-
-        window.onload = loadAdminData;
-        setInterval(loadAdminData, 2000);
     </script>
+
 </body>
 </html>

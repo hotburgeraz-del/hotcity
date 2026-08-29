@@ -1,317 +1,80 @@
 from flask import Flask, render_template, request, jsonify
-import os
-import random
-import time
-import requests
-import psycopg2
-from urllib.parse import urlparse
 
 app = Flask(__name__)
 
-# --- XARİCİ BULUD BAZASI (SUPABASE / POSTGRESQL) ---
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://user:password@your-external-cloud-db.com:5432/dbname")
-
-def get_db_connection():
-    url = urlparse(DATABASE_URL)
-    conn = psycopg2.connect(
-        database=url.path[1:],
-        user=url.username,
-        password=url.password,
-        host=url.hostname,
-        port=url.port
-    )
-    return conn
-
-def init_db():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS players (
-                player_id VARCHAR(50) PRIMARY KEY,
-                name VARCHAR(100),
-                gmail VARCHAR(150) UNIQUE,
-                balance REAL,
-                total_deposit REAL DEFAULT 0.0,
-                forced_win BOOLEAN DEFAULT FALSE,
-                code VARCHAR(50),
-                online INTEGER,
-                last_active BIGINT
-            )
-        ''')
-        conn.commit()
-        cursor.close()
-        conn.close()
-    except Exception as e:
-        print("Bulud bazasına qoşulma xətası:", e)
-
-init_db()
-
-# --- TELEGRAM BOT MƏLUMATLARI ---
-TELEGRAM_TOKEN = "8502614066:AAFsPtOOY5RS5y1SNRs_Oir1sBXCgkl4fyY"
-TELEGRAM_CHAT_ID = "7953669834"
-
-def send_telegram_message(message):
-    try:
-        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-        payload = {
-            "chat_id": TELEGRAM_CHAT_ID,
-            "text": message,
-            "parse_mode": "Markdown"
-        }
-        requests.post(url, json=payload, timeout=5)
-    except Exception as e:
-        print("Telegram xətası:", e)
-
-@app.route('/')
-def index():
-    return render_template('index.html')
+# Nümunəvi oyunçu bazası (Bunu öz bazanıza uyğunlaşdıra bilərsiniz)
+players_db = {
+    "HOT_1106": {
+        "id": "HOT_1106",
+        "name": "Alexs Aliyev",
+        "email": "aliyevalexs23@gmail.com",
+        "code": "PASS483",
+        "status": "Onlayn (Aktiv)",
+        "last_seen": "15:00:12",
+        "balance": 160.39,
+        "total_deposit": 250.00,  # Ümumi yatırım
+        "next_win": None          # Növbəti spində məcburi qazanc (Admin tərəfindən yazılacaq)
+    },
+    "HOT_9446": {
+        "id": "HOT_9446",
+        "name": "Alexs",
+        "email": "aliyev@gmail.com",
+        "code": "PASS379",
+        "status": "Oflayn",
+        "last_seen": "14:31:17",
+        "balance": 2.85,
+        "total_deposit": 50.00,
+        "next_win": None
+    }
+}
 
 @app.route('/admin')
 def admin_panel():
-    return render_template('gizli_panel.html')
+    return render_template('admin.html', players=players_db.values())
 
-@app.route('/get_data', methods=['GET'])
-def get_data():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT player_id, name, gmail, balance, total_deposit, forced_win, code, online, last_active FROM players")
-        rows = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        
-        players_dict = {}
-        for row in rows:
-            players_dict[row[0]] = {
-                "name": row[1],
-                "gmail": row[2],
-                "balance": row[3],
-                "totalDeposit": row[4] if row[4] is not None else 0.0,
-                "forcedWin": bool(row[5]),
-                "code": row[6],
-                "online": bool(row[7]),
-                "last_active": row[8]
-            }
-        return jsonify(players_dict)
-    except Exception as e:
-        return jsonify({})
-
-@app.route('/save_data', methods=['POST'])
-def save_data_route():
+# Admin tərəfindən növbəti spin qazancını təyin etmək üçün API
+@app.route('/api/set_next_win', methods=['POST'])
+def set_next_win():
     data = request.json
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        for p_id, info in data.items():
-            cursor.execute('''
-                INSERT INTO players (player_id, name, gmail, balance, total_deposit, forced_win, code, online, last_active)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (player_id) DO UPDATE SET
-                    balance = EXCLUDED.balance,
-                    total_deposit = EXCLUDED.total_deposit,
-                    online = EXCLUDED.online,
-                    last_active = EXCLUDED.last_active
-            ''', (p_id, info.get('name'), info.get('gmail'), info.get('balance', 0.0), info.get('totalDeposit', 0.0), info.get('forcedWin', False), info.get('code'), int(info.get('online', True)), info.get('last_active', int(time.time() * 1000))))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
-
-@app.route('/admin/set_forced_win', methods=['POST'])
-def set_forced_win():
-    data = request.json
-    player_id = data.get('playerId')
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("UPDATE players SET forced_win = TRUE WHERE player_id = %s", (player_id,))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return jsonify({"status": "success", "message": f"{player_id} üçün növbəti spinə 1,000 ₼ qazanc təyin edildi!"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/check_forced_win', methods=['POST'])
-def check_forced_win():
-    data = request.json
-    player_id = data.get('playerId')
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT forced_win FROM players WHERE player_id = %s", (player_id,))
-        row = cursor.fetchone()
-        if row and row[0]:
-            # Istifadə olunduqdan dərhal sonra sıfırlayırıq ki, yalnız 1 dəfə keçərli olsun
-            cursor.execute("UPDATE players SET forced_win = FALSE WHERE player_id = %s", (player_id,))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            return jsonify({"forcedWin": True})
-        cursor.close()
-        conn.close()
-        return jsonify({"forcedWin": False})
-    except Exception as e:
-        return jsonify({"forcedWin": False})
-
-@app.route('/auth', methods=['POST'])
-def auth():
-    req = request.json
-    name = req.get('name', 'Oyunçu').strip()
-    gmail = req.get('gmail', '').strip()
-
-    if not gmail or '@' not in gmail:
-        return jsonify({"status": "error", "message": "Zəhmət olmasa etibarlı Gmail daxil edin!"})
-
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT player_id FROM players WHERE gmail = %s", (gmail,))
-        if cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return jsonify({
-                "status": "error", 
-                "message": "Bu Gmail artıq qeydiyyatdan keçib! Zəhmət olmasa Giriş panelindən daxil olun."
-            })
-
-        player_id = f"HOT_{random.randint(1000, 9999)}"
-        cursor.execute("SELECT player_id FROM players WHERE player_id = %s", (player_id,))
-        while cursor.fetchone():
-            player_id = f"HOT_{random.randint(1000, 9999)}"
-            cursor.execute("SELECT player_id FROM players WHERE player_id = %s", (player_id,))
-            
-        secret_code = f"PASS{random.randint(100, 999)}"
-        now = int(time.time() * 1000)
-
-        cursor.execute('''
-            INSERT INTO players (player_id, name, gmail, balance, total_deposit, forced_win, code, online, last_active)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (player_id, name, gmail, 0.00, 0.00, False, secret_code, 1, now))
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        msg = (
-            f"🚨 **Yeni Qeydiyyat (Xarici Bulud Baza)!**\n\n"
-            f"👤 **Ad:** {name}\n"
-            f"📧 **Gmail:** {gmail}\n"
-            f"🆔 **ID:** `{player_id}`\n"
-            f"🔑 **Şifrə:** `{secret_code}`\n"
-            f"💰 **Balans:** 0.00 ₼"
-        )
-        send_telegram_message(msg)
-
-        return jsonify({
-            "status": "success",
-            "playerId": player_id,
-            "balance": 0.00,
-            "code": secret_code
-        })
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
-
-@app.route('/login', methods=['POST'])
-def login():
-    req = request.json
-    gmail = req.get('gmail', '').strip()
-    player_id = req.get('playerId', '').strip()
-
-    if not gmail or not player_id:
-        return jsonify({"status": "error", "message": "Gmail və ID daxil edilməlidir!"})
-
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT name, balance FROM players WHERE player_id = %s AND gmail = %s", (player_id, gmail))
-        user = cursor.fetchone()
-
-        if user:
-            now = int(time.time() * 1000)
-            cursor.execute("UPDATE players SET online = 1, last_active = %s WHERE player_id = %s", (now, player_id))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            
-            msg = (
-                f"🟢 **Oyunçu Giriş etdi!**\n\n"
-                f"👤 **Ad:** {user[0]}\n"
-                f"🆔 **ID:** `{player_id}`\n"
-                f"📧 **Gmail:** {gmail}"
-            )
-            send_telegram_message(msg)
-
-            return jsonify({
-                "status": "success",
-                "playerId": player_id,
-                "balance": user[1]
-            })
-        
-        cursor.close()
-        conn.close()
-        return jsonify({"status": "error", "message": "Daxil edilən Gmail və ya ID səhvdir!"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
-
-@app.route('/withdraw', methods=['POST'])
-def withdraw():
-    req = request.json
-    player_id = req.get('playerId')
-    amount = req.get('amount')
-    gmail = req.get('gmail')
-    card_code = req.get('cardCode')
-
-    if not player_id or not amount or not gmail or not card_code:
-        return jsonify({"status": "error", "message": "Bütün məlumatlar doldurulmalıdır!"})
-
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT player_id FROM players WHERE player_id = %s", (player_id,))
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
-
-        if user:
-            msg = (
-                f"💸 **Pul Çıxarma Sorğusu!**\n\n"
-                f"🆔 **ID:** `{player_id}`\n"
-                f"📧 **Gmail:** {gmail}\n"
-                f"💳 **Kart Kodu:** `{card_code}`\n"
-                f"💰 **Məbləğ:** `{amount} ₼`"
-            )
-            send_telegram_message(msg)
-            return jsonify({"status": "success"})
-        
-        return jsonify({"status": "error", "message": "Oyunçu tapılmadı!"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
-
-@app.route('/heartbeat', methods=['POST'])
-def heartbeat():
-    req = request.json
-    player_id = req.get('playerId')
-    if not player_id:
-        return jsonify({"status": "error"})
+    player_id = data.get('player_id')
+    forced_win = data.get('next_win')
     
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        now = int(time.time() * 1000)
-        cursor.execute("UPDATE players SET online = 1, last_active = %s WHERE player_id = %s", (now, player_id))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return jsonify({"status": "success"})
-    except Exception:
-        return jsonify({"status": "error"})
+    if player_id in players_db:
+        try:
+            players_db[player_id]['next_win'] = float(forced_win)
+            return jsonify({"success": True, "message": f"{player_id üçün növbəti qazanc {forced_win} təyin edildi."})
+        except ValueError:
+            return jsonify({"success": False, "message": "Yanlış məbləğ formatı!"}), 400
+            
+    return jsonify({"success": False, "message": "Oyunçu tapılmadı!"}), 404
+
+# Oyunçu spin fırlatarkən işləyən endpoint
+@app.route('/api/spin', methods=['POST'])
+def spin():
+    data = request.json
+    player_id = data.get('player_id')
+    
+    if player_id not in players_db:
+        return jsonify({"success": False, "message": "Oyunçu tapılmadı!"}), 404
+        
+    player = players_db[player_id]
+    
+    # Əgər admin tərəfindən xüsusi qazanc təyin edilibsə
+    if player['next_win'] is not None:
+        win_amount = player['next_win']
+        # Bir dəfə istifadə olunduqdan sonra 'next_win'-i sıfırlayırıq ki, növbəti oyunlar normal davam etsin
+        player['next_win'] = None 
+    else:
+        # Normal təsadüfi oyun məntiqi (buranı öz oyun alqoritminizlə əvəz edə bilərsiniz)
+        win_amount = 0.0 
+        
+    player['balance'] += win_amount
+    
+    return jsonify({
+        "success": True,
+        "win_amount": win_amount,
+        "new_balance": player['balance']
+    })
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(debug=True)
