@@ -8,8 +8,8 @@ from functools import wraps
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(32)
 
-# --- TELEGRAM BOT MƏLUMATLARI ---
-TELEGRAM_BOT_TOKEN = "8502614066:AAFQWPhBABDZ_Ie4v5UskvZLC6r4VuvvAT8"
+# --- TELEGRAM BOT MƏLUMATLARI (Yenilənmiş Aktiv Token) ---
+TELEGRAM_BOT_TOKEN = "8502614066:AAHeXnfABYXaOqLBD5RZG0wV4WNAEGK9KbQ"
 TELEGRAM_CHAT_ID = "7953669834"
 
 def send_telegram_async(message):
@@ -21,7 +21,8 @@ def send_telegram_async(message):
                 "text": message,
                 "parse_mode": "HTML"
             }
-            requests.post(url, json=payload, timeout=5)
+            response = requests.post(url, json=payload, timeout=5)
+            print("Telegram cavabı:", response.status_code, response.text) # Səhvləri izləmək üçün
         except Exception as e:
             print("Telegram xətası:", e)
     
@@ -61,7 +62,6 @@ def add_security_headers(response):
     response.headers['Content-Security-Policy'] = "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval';"
     return response
 
-# Balanslar sıfırlandı
 players_db = {
     "HOT_1106": {
         "id": "HOT_1106",
@@ -187,7 +187,7 @@ def withdraw():
     if player['balance'] < amount:
         return jsonify({"status": "error", "message": "Balans kifayət etmir!"})
         
-    # 150% şərti (Arxa planda işləyir, amma istifadəçiyə detallı rəqəmlər göstərilmir)
+    # 150% şərti (Arxa planda işləyir)
     min_required_win_balance = player['total_deposit'] * 1.5
     if player['balance'] < min_required_win_balance and player['total_deposit'] > 0:
         return jsonify({"status": "error", "message": "Pul çıxarmaq üçün şərtlər ödənmir!"})
