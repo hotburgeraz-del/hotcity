@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
-# Nümunəvi oyunçu bazası (Bunu öz bazanıza uyğunlaşdıra bilərsiniz)
+# Nümunəvi oyunçu bazası
 players_db = {
     "HOT_1106": {
         "id": "HOT_1106",
@@ -12,8 +12,8 @@ players_db = {
         "status": "Onlayn (Aktiv)",
         "last_seen": "15:00:12",
         "balance": 160.39,
-        "total_deposit": 250.00,  # Ümumi yatırım
-        "next_win": None          # Növbəti spində məcburi qazanc (Admin tərəfindən yazılacaq)
+        "total_deposit": 250.00,
+        "next_win": None
     },
     "HOT_9446": {
         "id": "HOT_9446",
@@ -32,7 +32,6 @@ players_db = {
 def admin_panel():
     return render_template('admin.html', players=players_db.values())
 
-# Admin tərəfindən növbəti spin qazancını təyin etmək üçün API
 @app.route('/api/set_next_win', methods=['POST'])
 def set_next_win():
     data = request.json
@@ -42,13 +41,14 @@ def set_next_win():
     if player_id in players_db:
         try:
             players_db[player_id]['next_win'] = float(forced_win)
-            return jsonify({"success": True, "message": f"{player_id üçün növbəti qazanc {forced_win} təyin edildi."})
+            # Sintaksis xətasını aradan qaldırmaq üçün f-string sadələşdirildi:
+            msg = "ugurla teyin edildi"
+            return jsonify({"success": True, "message": msg})
         except ValueError:
-            return jsonify({"success": False, "message": "Yanlış məbləğ formatı!"}), 400
+            return jsonify({"success": False, "message": "Yanlis mebleg formati!"}), 400
             
     return jsonify({"success": False, "message": "Oyunçu tapılmadı!"}), 404
 
-# Oyunçu spin fırlatarkən işləyən endpoint
 @app.route('/api/spin', methods=['POST'])
 def spin():
     data = request.json
@@ -59,13 +59,10 @@ def spin():
         
     player = players_db[player_id]
     
-    # Əgər admin tərəfindən xüsusi qazanc təyin edilibsə
     if player['next_win'] is not None:
         win_amount = player['next_win']
-        # Bir dəfə istifadə olunduqdan sonra 'next_win'-i sıfırlayırıq ki, növbəti oyunlar normal davam etsin
         player['next_win'] = None 
     else:
-        # Normal təsadüfi oyun məntiqi (buranı öz oyun alqoritminizlə əvəz edə bilərsiniz)
         win_amount = 0.0 
         
     player['balance'] += win_amount
