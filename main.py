@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
@@ -41,7 +42,6 @@ def set_next_win():
     if player_id in players_db:
         try:
             players_db[player_id]['next_win'] = float(forced_win)
-            # Sintaksis xətasını aradan qaldırmaq üçün f-string sadələşdirildi:
             msg = "ugurla teyin edildi"
             return jsonify({"success": True, "message": msg})
         except ValueError:
@@ -74,4 +74,5 @@ def spin():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
