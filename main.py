@@ -65,7 +65,8 @@ def add_balance():
         try:
             val = float(amount)
             players_db[player_id]['balance'] += val
-            return jsonify({"success": True, "message": f"Balansa {val:.2f} ₼ əlavə edildi!"})
+            players_db[player_id]['total_deposit'] += val  # Balans artdıqca ümumi depozit də artır
+            return jsonify({"success": True, "message": f"Balansa və depozitə {val:.2f} ₼ əlavə edildi!"})
         except ValueError:
             return jsonify({"success": False, "message": "Yanlış məbləğ!"}), 400
             
