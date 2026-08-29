@@ -48,13 +48,13 @@
         .symbol { display: flex; justify-content: center; align-items: center; position: relative; z-index: 2; user-select: none; }
         .symbol img { object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7)); transition: transform 0.2s, filter 0.2s; }
         
-        /* Hell Hot Stili: Qazanan simvollar böyüyüb-kiçilir və yanıb-sönür */
+        /* Hell Hot Stili: Qazanan simvollar böyüyüb-kiçilir və yanıb-sönür (Nebz kimi vurma effekti) */
         @keyframes hellHotPulse { 
             0% { transform: scale(1); filter: brightness(1) drop-shadow(0 0 2px #ff3300); } 
-            50% { transform: scale(1.22); filter: brightness(1.7) drop-shadow(0 0 15px #ffcc00); } 
+            50% { transform: scale(1.25); filter: brightness(1.8) drop-shadow(0 0 18px #ffcc00); } 
             100% { transform: scale(1); filter: brightness(1) drop-shadow(0 0 2px #ff3300); } 
         }
-        .symbol.winning img { animation: hellHotPulse 0.55s infinite ease-in-out; z-index: 20; }
+        .symbol.winning img { animation: hellHotPulse 0.45s infinite ease-in-out; z-index: 20; }
 
         @media (min-width: 768px) {
             .logo { font-size: 26px; }
@@ -436,33 +436,42 @@
             coordsSet.forEach(coordStr => {
                 let [col, row] = coordStr.split('-').map(Number);
                 const strip = document.getElementById(`strip${col}`);
-                if (strip?.getElementsByClassName('symbol')[row]) strip.getElementsByClassName('symbol')[row].classList.add('winning');
+                if (strip?.getElementsByClassName('symbol')[row]) {
+                    strip.getElementsByClassName('symbol')[row].classList.add('winning');
+                }
             });
         }
 
-        // Hell Hot stilində qazanan xətləri ekranda əyri/düz cizgilərlə birləşdirən funksiya
+        // Hell Hot üslubunda qazanan xətləri (çizgiləri) birbaşa simvolların mərkəzindən çəkən funksiya
         function drawWinningLines(lines) {
-            const svg = document.getElementById('winLinesSvg'); svg.innerHTML = '';
-            const container = document.getElementById('slotContainer'), rect = container.getBoundingClientRect();
+            const svg = document.getElementById('winLinesSvg'); 
+            svg.innerHTML = '';
+            const container = document.getElementById('slotContainer');
+            const rect = container.getBoundingClientRect();
             
             lines.forEach(lineCoords => {
                 let points = [];
                 lineCoords.forEach(coord => {
                     const strip = document.getElementById(`strip${coord[0]}`);
-                    if (strip?.getElementsByClassName('symbol')[coord[1]]) {
-                        let sRect = strip.getElementsByClassName('symbol')[coord[1]].getBoundingClientRect();
-                        points.push(`${(sRect.left + sRect.width / 2) - rect.left},${(sRect.top + sRect.height / 2) - rect.top}`);
+                    if (strip) {
+                        const symbols = strip.getElementsByClassName('symbol');
+                        if (symbols[coord[1]]) {
+                            let sRect = symbols[coord[1]].getBoundingClientRect();
+                            let x = (sRect.left + sRect.width / 2) - rect.left;
+                            let y = (sRect.top + sRect.height / 2) - rect.top;
+                            points.push(`${x},${y}`);
+                        }
                     }
                 });
                 if (points.length > 1) {
                     let polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
                     polyline.setAttribute('points', points.join(' '));
-                    polyline.setAttribute('stroke', '#ffcc00'); 
-                    polyline.setAttribute('stroke-width', '5'); 
+                    polyline.setAttribute('stroke', '#ff3300'); 
+                    polyline.setAttribute('stroke-width', '4'); 
                     polyline.setAttribute('stroke-linecap', 'round');
                     polyline.setAttribute('stroke-linejoin', 'round');
                     polyline.setAttribute('fill', 'none');
-                    polyline.style.filter = 'drop-shadow(0 0 6px #ff3300)';
+                    polyline.style.filter = 'drop-shadow(0 0 8px #ffcc00)';
                     svg.appendChild(polyline);
                 }
             });
@@ -470,6 +479,7 @@
 
         function clearWinningSymbols() { document.querySelectorAll('.symbol').forEach(el => el.classList.remove('winning')); }
         function clearWinLines() { document.getElementById('winLinesSvg').innerHTML = ''; }
+        
         function showWin(amount, isBigWin) {
             let winDisplay = document.getElementById('winDisplay');
             winDisplay.innerText = isBigWin ? `BIG WIN! ₼${amount.toFixed(2)}` : `WIN! ₼${amount.toFixed(2)}`;
