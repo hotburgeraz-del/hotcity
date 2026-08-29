@@ -29,6 +29,12 @@ players_db = {
     }
 }
 
+# 1. Oyun səhifəsi (index.html) - əsas linkə girəndə açılacaq
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+# 2. Admin paneli - /admin yazanda açılacaq
 @app.route('/admin')
 def admin_panel():
     return render_template('admin.html', players=players_db.values())
@@ -58,7 +64,6 @@ def check_forced_win():
     
     if player_id in players_db:
         win_val = players_db[player_id]['next_win']
-        # İstifadəçi spini edən kimi növbəti qazancı sıfırlayırıq ki, növbəti spinlər normal olsun
         players_db[player_id]['next_win'] = None
         return jsonify({"forcedWin": win_val if win_val is not None else 0})
         
@@ -90,6 +95,7 @@ def heartbeat():
 
 @app.route('/withdraw', methods=['POST'])
 def withdraw():
+    data.get('playerId')
     data = request.json
     player_id = data.get('playerId')
     amount = data.get('amount')
