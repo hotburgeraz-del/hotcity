@@ -41,7 +41,7 @@ def set_next_win():
     
     if player_id in players_db:
         try:
-            if forced_win === "" or forced_win is None:
+            if forced_win == "" or forced_win is None:
                 players_db[player_id]['next_win'] = None
             else:
                 players_db[player_id]['next_win'] = float(forced_win)
