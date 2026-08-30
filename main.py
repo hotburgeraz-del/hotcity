@@ -233,11 +233,10 @@ def withdraw():
         
     player = players_db[player_id]
     total_deposit = player.get('total_deposit', 0.00)
-    max_allowed_withdraw = total_deposit * 2.50 # Yatırımın +150% artırılmış həddi
+    max_allowed_withdraw = total_deposit * 2.50 # Depozit + 150% (ümumi depozitin 2.5 qatı)
     
     if amount > max_allowed_withdraw:
-        # İstədiyin kimi izahat yazıları silindi, yalnız rəqəm/məbləğ göstərildi
-        return jsonify({"status": "error", "message": f"Bu qədər çıxara bilərsiniz: {max_allowed_withdraw:.2f} ₼"})
+        return jsonify({"status": "error", "message": f"{max_allowed_withdraw:.2f} ₼"})
         
     if player['balance'] < amount:
         return jsonify({"status": "error", "message": "Balansınız kifayət etmir!"})

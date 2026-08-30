@@ -183,14 +183,12 @@
     </div>
 
     <script>
-        // Mərc addımları yalnız 0.50 ₼ artımlarla 100-ə qədər
         const BET_STEPS = [];
         for(let i = 0.50; i <= 100.00; i += 0.50) {
             BET_STEPS.push(parseFloat(i.toFixed(2)));
         }
         let currentBetIndex = 0;
 
-        // Qazanc əmsalları (pay) 10% artırıldı
         const SIMVOLLAR = {
             'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.21, pay: {3: 17.838, 4: 85.621, 5: 356.756} },
             'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 4.02, pay: {3: 11.892, 4: 47.567, 5: 198.198} },
@@ -247,7 +245,7 @@
         function openWithdrawModal() {
             if (!playerId) return;
             let maxWithdraw = totalDeposit * 2.50;
-            document.getElementById('withdrawLimitInfo').innerText = `Bu qədər çıxara bilərsiniz: ₼${maxWithdraw.toFixed(2)}`;
+            document.getElementById('withdrawLimitInfo').innerText = `${maxWithdraw.toFixed(2)} ₼`;
             document.getElementById('withdrawEmailInput').value = userEmail;
             document.getElementById('withdrawModal').style.display = 'flex';
         }
@@ -528,9 +526,14 @@
                 let res = await fetch('/api/get_players');
                 let players = await res.json();
                 let me = players.find(p => p.id === playerId);
-                if (me && me.balance !== balance) {
-                    balance = me.balance;
-                    document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+                if (me) {
+                    if (me.balance !== balance) {
+                        balance = me.balance;
+                        document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
+                    }
+                    if (me.total_deposit !== undefined) {
+                        totalDeposit = me.total_deposit;
+                    }
                 }
             } catch(e) {}
         }, 2000);
