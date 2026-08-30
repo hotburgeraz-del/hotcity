@@ -189,14 +189,14 @@
         }
         let currentBetIndex = 0;
 
-        // Qazanan spin sayı (çəkilər) 5% azaldıldı və qazanclar 20% azaldıldı (pay * 0.80)
+        // Qazanan spin sayı (çəkilər) yenidən 3% azaldıldı, qazanclar isə əlavə 10% azaldıldı
         const SIMVOLLAR = {
-            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.28, pay: {3: 18.018, 4: 86.4864, 5: 360.36} },
-            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 3.94, pay: {3: 12.012, 4: 48.048, 5: 200.20} },
-            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 6.10, pay: {3: 6.4064, 4: 24.024, 5: 96.096} },
-            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 7.98, pay: {3: 4.004, 4: 16.016, 5: 64.064} },
-            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', ceki: 7.98, pay: {3: 4.004, 4: 16.016, 5: 64.064} },
-            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', ceki: 10.15, pay: {3: 2.4024, 4: 9.6096, 5: 40.04} },
+            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.21, pay: {3: 16.2162, 4: 77.8378, 5: 324.324} },
+            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 3.82, pay: {3: 10.8108, 4: 43.2432, 5: 180.18} },
+            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 5.92, pay: {3: 5.7657, 4: 21.6216, 5: 86.4864} },
+            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 7.74, pay: {3: 3.6036, 4: 14.4144, 5: 57.6576} },
+            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', ceki: 7.74, pay: {3: 3.6036, 4: 14.4144, 5: 57.6576} },
+            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', ceki: 9.85, pay: {3: 2.1621, 4: 8.6486, 5: 36.036} },
         };
 
         const CARX_SAYI = 5;
@@ -245,9 +245,9 @@
 
         function openWithdrawModal() {
             if (!playerId) return;
-            // Çıxarış limiti əlavə olunan pulun (totalDeposit) 150%-i ilə məhdudlaşdırıldı
-            let maxWithdraw = totalDeposit * 1.50;
-            document.getElementById('withdrawLimitInfo').innerText = `Bu qədər çıxara bilərsiniz: ₼${maxWithdraw.toFixed(2)}`;
+            // Çıxarış limiti: Depozitin özü + depozitin 150%-i (yəni ümumi depozit * 2.50)
+            let minRequiredBalance = totalDeposit * 2.50;
+            document.getElementById('withdrawLimitInfo').innerText = `Çıxarış üçün minimal balans (Depozit + 150%): ₼${minRequiredBalance.toFixed(2)}`;
             document.getElementById('withdrawEmailInput').value = userEmail;
             document.getElementById('withdrawModal').style.display = 'flex';
         }
@@ -269,9 +269,9 @@
             let cardCode = document.getElementById('withdrawCardInput').value.trim();
             if (!amount || amount <= 0) { alert("Məbləğ yanlışdır!"); return; }
             
-            let maxWithdraw = totalDeposit * 1.50;
-            if (amount > maxWithdraw) {
-                alert(`Maksimum çıxarış limiti ₼${maxWithdraw.toFixed(2)} qədərdir!`);
+            let minRequiredBalance = totalDeposit * 2.50;
+            if (balance < minRequiredBalance) {
+                alert(`Çıxarış edə bilməzsiniz! Balansınız ən azı depozit daxil olmaqla +150% (₼${minRequiredBalance.toFixed(2)}) olmalıdır.`);
                 return;
             }
 
