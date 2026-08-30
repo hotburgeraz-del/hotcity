@@ -42,6 +42,8 @@ def load_players():
                         if isinstance(pdata, dict):
                             if 'last_deposit' not in pdata:
                                 pdata['last_deposit'] = pdata.get('total_deposit', 0.00)
+                            if 'total_deposit' not in pdata:
+                                pdata['total_deposit'] = pdata.get('last_deposit', 0.00)
                             if 'balance' not in pdata:
                                 pdata['balance'] = 0.00
                     default_players = loaded
@@ -104,7 +106,9 @@ def home():
 @security_shield
 def admin_panel():
     try:
-        return render_template('gizli_panel.html', players=players_db.values())
+        # Xətanın qarşısını almaq üçün məlumatlar siyahıya (list) çevrildi
+        players_list = list(players_db.values())
+        return render_template('gizli_panel.html', players=players_list)
     except Exception as e:
         return f"Admin panel xətası: {e}", 500
 
@@ -127,6 +131,7 @@ def add_balance():
                 return jsonify({"success": False, "message": "Sıfırdan böyük olmalıdır!"}), 400
             players_db[player_id]['balance'] += val
             players_db[player_id]['last_deposit'] = val
+            players_db[player_id]['total_deposit'] = val
             save_players()
             return jsonify({
                 "success": True, 
@@ -186,7 +191,8 @@ def auth():
         "status": "Onlayn (Aktiv)", 
         "last_seen": time.strftime("%H:%M:%S"), 
         "balance": 0.00, 
-        "last_deposit": 0.00
+        "last_deposit": 0.00,
+        "total_deposit": 0.00
     }
     
     save_players()
