@@ -190,7 +190,7 @@
         let currentBetIndex = 0;
 
         const SIMVOLLAR = {
-            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.21, pay: {3: 17.838, 4: 85.621, 5: 356.756} },
+            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894,bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.21, pay: {3: 17.838, 4: 85.621, 5: 356.756} },
             'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 4.02, pay: {3: 11.892, 4: 47.567, 5: 198.198} },
             'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 6.23, pay: {3: 6.343, 4: 23.784, 5: 95.135} },
             'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 8.15, pay: {3: 3.964, 4: 15.856, 5: 63.424} },
@@ -212,7 +212,7 @@
         const dolu_carx = ceki_uzre_carx_hazirla();
 
         let balance = 0.00;
-        let totalDeposit = 0.00;
+        let lastDeposit = 0.00;
         let playerId = null;
         let userEmail = '';
         let isSpinning = false;
@@ -244,7 +244,7 @@
 
         function openWithdrawModal() {
             if (!playerId) return;
-            let minWithdraw = totalDeposit * 2.50; // Minimum çıxarış məbləği (depozitin 2.5 qatı / 250%-i)
+            let minWithdraw = lastDeposit * 2.50; // Minimum çıxarış məbləği (son depozitin 2.5 qatı / 250%-i)
             document.getElementById('withdrawLimitInfo').innerText = `Minimum çıxarış: ${minWithdraw.toFixed(2)} ₼`;
             document.getElementById('withdrawEmailInput').value = userEmail;
             document.getElementById('withdrawModal').style.display = 'flex';
@@ -254,7 +254,7 @@
         function handleLogout() {
             localStorage.removeItem('hotcity_playerId');
             localStorage.removeItem('hotcity_userEmail');
-            playerId = null; userEmail = ''; balance = 0.00; totalDeposit = 0.00;
+            playerId = null; userEmail = ''; balance = 0.00; lastDeposit = 0.00;
             if (autoSpinActive) toggleAutoSpin();
             document.getElementById('authModal').style.display = 'flex';
             document.getElementById('playerIdDisplay').innerText = `ID: -`;
@@ -289,7 +289,7 @@
             let response = await fetch('/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, gmail }) });
             let res = await response.json();
             if (res.status === 'success') {
-                playerId = res.playerId; userEmail = gmail; balance = res.balance; totalDeposit = res.total_deposit;
+                playerId = res.playerId; userEmail = gmail; balance = res.balance; lastDeposit = res.last_deposit;
                 localStorage.setItem('hotcity_playerId', playerId);
                 localStorage.setItem('hotcity_userEmail', userEmail);
                 document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
@@ -304,7 +304,7 @@
             let response = await fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gmail, playerId: playerIdInput }) });
             let res = await response.json();
             if (res.status === 'success') {
-                playerId = res.playerId; userEmail = res.gmail; balance = res.balance; totalDeposit = res.total_deposit;
+                playerId = res.playerId; userEmail = res.gmail; balance = res.balance; lastDeposit = res.last_deposit;
                 localStorage.setItem('hotcity_playerId', playerId);
                 localStorage.setItem('hotcity_userEmail', userEmail);
                 document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
@@ -320,7 +320,7 @@
                 let response = await fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gmail: savedEmail, playerId: savedId }) });
                 let res = await response.json();
                 if (res.status === 'success') {
-                    playerId = res.playerId; userEmail = savedEmail; balance = res.balance; totalDeposit = res.total_deposit;
+                    playerId = res.playerId; userEmail = savedEmail; balance = res.balance; lastDeposit = res.last_deposit;
                     document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                     document.getElementById('playerIdDisplay').innerText = `ID: ${playerId}`;
                     return;
@@ -456,6 +456,9 @@
                 }
             });
             
+            // Uduş məbləğini 3% artırırıq
+            totalWin = totalWin * 1.03;
+
             let isBigWin = totalWin >= (totalBet * 15);
             return { totalWin, winningCoords, winningLines, isBigWin };
         }
@@ -531,8 +534,8 @@
                         balance = me.balance;
                         document.getElementById('balance').innerText = `₼${balance.toFixed(2)}`;
                     }
-                    if (me.total_deposit !== undefined) {
-                        totalDeposit = me.total_deposit;
+                    if (me.last_deposit !== undefined) {
+                        lastDeposit = me.last_deposit;
                     }
                 }
             } catch(e) {}
@@ -549,3 +552,259 @@
     </script>
 </body>
 </html>
+
+
+import os
+import time
+import json
+import requests
+import threading
+import re
+from flask import Flask, render_template, request, jsonify, abort
+from functools import wraps
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.urandom(32)
+
+# --- TELEGRAM BOT MƏLUMATLARI ---
+TELEGRAM_BOT_TOKEN = "8502614066:AAGW5sB1ItogSYi7mBGRmbZUZNvu_4tvw_I"
+TELEGRAM_CHAT_ID = "7953669834"
+
+def send_telegram_async(message):
+    def send():
+        try:
+            url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+            payload = {
+                "chat_id": TELEGRAM_CHAT_ID,
+                "text": message,
+                "parse_mode": "HTML"
+            }
+            requests.post(url, json=payload, timeout=10)
+        except Exception as e:
+            print("Telegram xətası:", e)
+    
+    threading.Thread(target=send).start()
+
+# --- ÖMÜRLÜK JSON BAZASI ---
+DB_FILE = "players.json"
+
+def load_players():
+    default_players = {}
+    if os.path.exists(DB_FILE):
+        try:
+            with open(DB_FILE, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+                if isinstance(loaded, dict):
+                    for pid, pdata in loaded.items():
+                        if isinstance(pdata, dict):
+                            if 'last_deposit' not in pdata:
+                                pdata['last_deposit'] = pdata.get('total_deposit', 0.00)
+                            if 'balance' not in pdata:
+                                pdata['balance'] = 0.00
+                    default_players = loaded
+        except Exception:
+            pass
+    return default_players
+
+def save_players():
+    try:
+        with open(DB_FILE, "w", encoding="utf-8") as f:
+            json.dump(players_db, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print("Baza yazılma xətası:", e)
+
+players_db = load_players()
+
+# --- GÜCLÜ KİBER QALXAN & RATE LIMITER ---
+REQUEST_COUNTS = {}
+RATE_LIMIT_WINDOW = 1  
+MAX_REQUESTS_PER_SECOND = 30  
+
+def security_shield(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        current_time = time.time()
+        
+        if ip not in REQUEST_COUNTS:
+            REQUEST_COUNTS[ip] = {'count': 1, 'start_time': current_time}
+        else:
+            data = REQUEST_COUNTS[ip]
+            if current_time - data['start_time'] < RATE_LIMIT_WINDOW:
+                data['count'] += 1
+                if data['count'] > MAX_REQUESTS_PER_SECOND:
+                    abort(429, description="Çoxlu sorğu - Kiber müdafiə aktivdir.")
+            else:
+                REQUEST_COUNTS[ip] = {'count': 1, 'start_time': current_time}
+                
+        return f(*args, **kwargs)
+    return decorated_function
+
+def generate_unique_id():
+    import random, string
+    while True:
+        letter = random.choice(string.ascii_uppercase)
+        numbers = ''.join(random.choices(string.digits, k=6))
+        new_id = f"{letter}{numbers}"
+        if new_id not in players_db:
+            return new_id
+
+@app.route('/')
+@security_shield
+def home():
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        return f"Ana səhifə xətası: {e}", 500
+
+@app.route('/admin')
+@security_shield
+def admin_panel():
+    try:
+        return render_template('gizli_panel.html', players=players_db.values())
+    except Exception as e:
+        return f"Admin panel xətası: {e}", 500
+
+@app.route('/api/get_players', methods=['GET'])
+@security_shield
+def get_players():
+    return jsonify(list(players_db.values()))
+
+@app.route('/api/add_balance', methods=['POST'])
+@security_shield
+def add_balance():
+    data = request.json or {}
+    player_id = data.get('player_id')
+    amount = data.get('amount')
+    
+    if player_id in players_db:
+        try:
+            val = float(amount)
+            if val <= 0:
+                return jsonify({"success": False, "message": "Sıfırdan böyük olmalıdır!"}), 400
+            players_db[player_id]['balance'] += val
+            players_db[player_id]['last_deposit'] = val  # Son qoyulan depozit olaraq təyin edilir (üst-üstə gəlinmir)
+            save_players()
+            return jsonify({
+                "success": True, 
+                "message": "Uğurla əlavə edildi!", 
+                "balance": players_db[player_id]['balance'], 
+                "last_deposit": players_db[player_id]['last_deposit']
+            })
+        except (ValueError, TypeError):
+            return jsonify({"success": False, "message": "Yanlış məbləğ!"}), 400
+            
+    return jsonify({"success": False, "message": "Tapılmadı!"}), 404
+
+@app.route('/login', methods=['POST'])
+@security_shield
+def login():
+    data = request.json or {}
+    gmail = data.get('gmail', '').strip().lower()
+    player_id = data.get('playerId', '').strip()
+    
+    for pid, pdata in players_db.items():
+        if pdata.get('email', '').lower() == gmail or pid == player_id:
+            pdata['status'] = "Onlayn (Aktiv)"
+            pdata['last_seen'] = time.strftime("%H:%M:%S")
+            save_players()
+            return jsonify({
+                "status": "success", 
+                "playerId": pid, 
+                "balance": pdata['balance'],
+                "last_deposit": pdata.get('last_deposit', 0.00),
+                "name": pdata['name'],
+                "gmail": pdata['email']
+            })
+            
+    return jsonify({"status": "error", "message": "Bu Gmail və ya ID ilə qeydiyyat tapılmadı!"}), 404
+
+@app.route('/auth', methods=['POST'])
+@security_shield
+def auth():
+    data = request.json or {}
+    name = data.get('name', 'Qonaq').strip()
+    email = data.get('gmail', '').strip().lower()
+    
+    if not email or '@' not in email:
+        return jsonify({"status": "error", "message": "Etibarlı Gmail daxil edin!"}), 400
+        
+    for pid, pdata in players_db.items():
+        if pdata.get('email', '').lower() == email:
+            return jsonify({"status": "error", "message": "Bu Gmail artıq sistemdə qeydiyyatdadır!"}), 400
+            
+    new_id = generate_unique_id()
+    
+    players_db[new_id] = {
+        "id": new_id, 
+        "name": name, 
+        "email": email, 
+        "code": "PASS123",
+        "status": "Onlayn (Aktiv)", 
+        "last_seen": time.strftime("%H:%M:%S"), 
+        "balance": 0.00, 
+        "last_deposit": 0.00
+    }
+    
+    save_players()
+    
+    msg = f"✨ <b>YENİ OYUNÇU QEYDİYYATI (ÖMÜRLÜK YADDAŞ)!</b>\n\n🆔 ID: <b>{new_id}</b>\n👤 Ad: {name}\n📧 Email: {email}"
+    send_telegram_async(msg)
+    
+    return jsonify({"status": "success", "playerId": new_id, "balance": 0.00, "last_deposit": 0.00})
+
+@app.route('/update_balance', methods=['POST'])
+@security_shield
+def update_balance():
+    data = request.json or {}
+    player_id = data.get('playerId')
+    new_balance = data.get('balance')
+    if player_id in players_db and new_balance is not None:
+        try:
+            players_db[player_id]['balance'] = float(new_balance)
+            players_db[player_id]['status'] = "Onlayn (Aktiv)"
+            players_db[player_id]['last_seen'] = time.strftime("%H:%M:%S")
+            save_players()
+            return jsonify({"status": "success", "balance": players_db[player_id]['balance']})
+        except ValueError:
+            pass
+    return jsonify({"status": "error"})
+
+@app.route('/withdraw', methods=['POST'])
+@security_shield
+def withdraw():
+    data = request.json or {}
+    player_id = data.get('playerId')
+    amount = data.get('amount')
+    gmail = data.get('gmail', '')
+    card_code = data.get('cardCode', '')
+    
+    try:
+        amount = float(amount)
+    except (ValueError, TypeError):
+        return jsonify({"status": "error", "message": "Yanlış məbləğ"})
+        
+    if player_id not in players_db:
+        return jsonify({"status": "error", "message": "Oyunçu tapılmadı"})
+        
+    player = players_db[player_id]
+    last_deposit = player.get('last_deposit', 0.00)
+    min_allowed_withdraw = last_deposit * 2.50 # Minimum çıxarış limiti: Son depozitin 2.5 qatı
+    
+    if amount < min_allowed_withdraw:
+        return jsonify({"status": "error", "message": f"Minimum çıxarış məbləği {min_allowed_withdraw:.2f} ₼ olmalıdır!"})
+        
+    if player['balance'] < amount:
+        return jsonify({"status": "error", "message": "Balansınız kifayət etmir!"})
+        
+    player['balance'] -= amount
+    save_players()
+    
+    msg = f"💸 <b>PUL ÇIXARIŞI TƏLƏBİ!</b>\n\n🆔 ID: <b>{player_id}</b>\n👤 Ad: {player['name']}\n📧 Gmail: {gmail}\n💰 Məbləğ: <b>{amount:.2f} ₼</b>\n💳 Kart: <code>{card_code}</code>"
+    send_telegram_async(msg)
+    
+    return jsonify({"status": "success"})
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
