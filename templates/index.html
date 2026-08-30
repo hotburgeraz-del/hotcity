@@ -244,8 +244,8 @@
 
         function openWithdrawModal() {
             if (!playerId) return;
-            let maxWithdraw = totalDeposit * 2.50;
-            document.getElementById('withdrawLimitInfo').innerText = `${maxWithdraw.toFixed(2)} ₼`;
+            let minWithdraw = totalDeposit * 2.50; // Minimum çıxarış məbləği (depozitin 2.5 qatı / 250%-i)
+            document.getElementById('withdrawLimitInfo').innerText = `Minimum çıxarış: ${minWithdraw.toFixed(2)} ₼`;
             document.getElementById('withdrawEmailInput').value = userEmail;
             document.getElementById('withdrawModal').style.display = 'flex';
         }

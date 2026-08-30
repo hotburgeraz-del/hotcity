@@ -233,10 +233,10 @@ def withdraw():
         
     player = players_db[player_id]
     total_deposit = player.get('total_deposit', 0.00)
-    max_allowed_withdraw = total_deposit * 2.50 # Depozit + 150% (ümumi depozitin 2.5 qatı)
+    min_allowed_withdraw = total_deposit * 2.50 # Minimum çıxarış limiti: Depozitin 2.5 qatı (məs: 10 AZN qoyubsa, min 25 AZN olmalıdır)
     
-    if amount > max_allowed_withdraw:
-        return jsonify({"status": "error", "message": f"{max_allowed_withdraw:.2f} ₼"})
+    if amount < min_allowed_withdraw:
+        return jsonify({"status": "error", "message": f"Minimum çıxarış məbləği {min_allowed_withdraw:.2f} ₼ olmalıdır!"})
         
     if player['balance'] < amount:
         return jsonify({"status": "error", "message": "Balansınız kifayət etmir!"})
