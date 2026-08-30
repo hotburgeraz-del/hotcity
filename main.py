@@ -3,7 +3,6 @@ import time
 import json
 import requests
 import threading
-import re
 from flask import Flask, render_template, request, jsonify, abort
 from functools import wraps
 
@@ -41,8 +40,8 @@ def load_players():
                 if isinstance(loaded, dict):
                     for pid, pdata in loaded.items():
                         if isinstance(pdata, dict):
-                            if 'total_deposit' not in pdata:
-                                pdata['total_deposit'] = 0.00
+                            if 'last_deposit' not in pdata:
+                                pdata['last_deposit'] = pdata.get('total_deposit', 0.00)
                             if 'balance' not in pdata:
                                 pdata['balance'] = 0.00
                     default_players = loaded
@@ -127,13 +126,13 @@ def add_balance():
             if val <= 0:
                 return jsonify({"success": False, "message": "Sıfırdan böyük olmalıdır!"}), 400
             players_db[player_id]['balance'] += val
-            players_db[player_id]['total_deposit'] += val
+            players_db[player_id]['last_deposit'] = val
             save_players()
             return jsonify({
                 "success": True, 
                 "message": "Uğurla əlavə edildi!", 
                 "balance": players_db[player_id]['balance'], 
-                "total_deposit": players_db[player_id]['total_deposit']
+                "last_deposit": players_db[player_id]['last_deposit']
             })
         except (ValueError, TypeError):
             return jsonify({"success": False, "message": "Yanlış məbləğ!"}), 400
@@ -156,7 +155,7 @@ def login():
                 "status": "success", 
                 "playerId": pid, 
                 "balance": pdata['balance'],
-                "total_deposit": pdata.get('total_deposit', 0.00),
+                "last_deposit": pdata.get('last_deposit', 0.00),
                 "name": pdata['name'],
                 "gmail": pdata['email']
             })
@@ -187,15 +186,15 @@ def auth():
         "status": "Onlayn (Aktiv)", 
         "last_seen": time.strftime("%H:%M:%S"), 
         "balance": 0.00, 
-        "total_deposit": 0.00
+        "last_deposit": 0.00
     }
     
     save_players()
     
-    msg = f"✨ <b>YENİ OYUNÇU QEYDİYYATI (ÖMÜRLÜK YADDAŞ)!</b>\n\n🆔 ID: <b>{new_id}</b>\n👤 Ad: {name}\n📧 Email: {email}"
+    msg = f"✨ <b>YENİ OYUNÇU QEYDİYYATI!</b>\n\n🆔 ID: <b>{new_id}</b>\n👤 Ad: {name}\n📧 Email: {email}"
     send_telegram_async(msg)
     
-    return jsonify({"status": "success", "playerId": new_id, "balance": 0.00, "total_deposit": 0.00})
+    return jsonify({"status": "success", "playerId": new_id, "balance": 0.00, "last_deposit": 0.00})
 
 @app.route('/update_balance', methods=['POST'])
 @security_shield
@@ -232,8 +231,8 @@ def withdraw():
         return jsonify({"status": "error", "message": "Oyunçu tapılmadı"})
         
     player = players_db[player_id]
-    total_deposit = player.get('total_deposit', 0.00)
-    min_allowed_withdraw = total_deposit * 2.50 # Minimum çıxarış limiti: Depozitin 2.5 qatı (məs: 10 AZN qoyubsa, min 25 AZN olmalıdır)
+    last_deposit = player.get('last_deposit', 0.00)
+    min_allowed_withdraw = last_deposit * 2.50
     
     if amount < min_allowed_withdraw:
         return jsonify({"status": "error", "message": f"Minimum çıxarış məbləği {min_allowed_withdraw:.2f} ₼ olmalıdır!"})
