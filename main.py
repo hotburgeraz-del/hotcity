@@ -39,7 +39,6 @@ def load_players():
             with open(DB_FILE, "r", encoding="utf-8") as f:
                 loaded = json.load(f)
                 if isinstance(loaded, dict):
-                    # Köhnə hesablarda çatışmayan açarları (total_deposit və balance) yoxlayıb avtomatik əlavə edirik
                     for pid, pdata in loaded.items():
                         if isinstance(pdata, dict):
                             if 'total_deposit' not in pdata:
@@ -174,7 +173,6 @@ def auth():
     if not email or '@' not in email:
         return jsonify({"status": "error", "message": "Etibarlı Gmail daxil edin!"}), 400
         
-    # 1 Gmail yalnız 1 dəfə qeydiyyatda ola bilər
     for pid, pdata in players_db.items():
         if pdata.get('email', '').lower() == email:
             return jsonify({"status": "error", "message": "Bu Gmail artıq sistemdə qeydiyyatdadır!"}), 400
@@ -238,7 +236,8 @@ def withdraw():
     max_allowed_withdraw = total_deposit * 2.50 # Yatırımın +150% artırılmış həddi
     
     if amount > max_allowed_withdraw:
-        return jsonify({"status": "error", "message": f"Bu qədər çıxara bilərsiniz: {max_allowed_withdraw:.2f} ₼ (Yatırımın +150% həddi)"})
+        # İstədiyin kimi izahat yazıları silindi, yalnız rəqəm/məbləğ göstərildi
+        return jsonify({"status": "error", "message": f"Bu qədər çıxara bilərsiniz: {max_allowed_withdraw:.2f} ₼"})
         
     if player['balance'] < amount:
         return jsonify({"status": "error", "message": "Balansınız kifayət etmir!"})
