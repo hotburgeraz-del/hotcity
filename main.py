@@ -9,7 +9,6 @@ from functools import wraps
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(32)
 
-# --- TELEGRAM BOT MƏLUMATLARI ---
 TELEGRAM_BOT_TOKEN = "8502614066:AAGW5sB1ItogSYi7mBGRmbZUZNvu_4tvw_I"
 TELEGRAM_CHAT_ID = "7953669834"
 
@@ -28,7 +27,6 @@ def send_telegram_async(message):
     
     threading.Thread(target=send).start()
 
-# --- ÖMÜRLÜK JSON BAZASI ---
 DB_FILE = "players.json"
 
 def load_players():
@@ -60,7 +58,6 @@ def save_players():
 
 players_db = load_players()
 
-# --- GÜCLÜ KİBER QALXAN & RATE LIMITER ---
 REQUEST_COUNTS = {}
 RATE_LIMIT_WINDOW = 1  
 MAX_REQUESTS_PER_SECOND = 30  
@@ -106,7 +103,6 @@ def home():
 @security_shield
 def admin_panel():
     try:
-        # Xətanın qarşısını almaq üçün məlumatlar siyahıya (list) çevrildi
         players_list = list(players_db.values())
         return render_template('gizli_panel.html', players=players_list)
     except Exception as e:
@@ -131,12 +127,13 @@ def add_balance():
                 return jsonify({"success": False, "message": "Sıfırdan böyük olmalıdır!"}), 400
             players_db[player_id]['balance'] += val
             players_db[player_id]['last_deposit'] = val
-            players_db[player_id]['total_deposit'] = val
+            players_db[player_id]['total_deposit'] = players_db[player_id].get('total_deposit', 0.0) + val
             save_players()
             return jsonify({
                 "success": True, 
                 "message": "Uğurla əlavə edildi!", 
                 "balance": players_db[player_id]['balance'], 
+                "total_deposit": players_db[player_id]['total_deposit'],
                 "last_deposit": players_db[player_id]['last_deposit']
             })
         except (ValueError, TypeError):
