@@ -190,14 +190,14 @@
         }
         let currentBetIndex = 0;
 
-        // Uduran spinlər 3% azaldıldı, qazanc 10% artırıldı
+        // Əvvəlki dəyərlərdən əlavə 3% azaldılmış çəkilər (daha az uduş ehtimalı) və 9% azaldılmış qazanc əmsalları (pay)
         const SIMVOLLAR = {
-            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.55, pay: {3: 27.5, 4: 132, 5: 550} },
-            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 4.28, pay: {3: 16.5, 4: 66, 5: 275} },
-            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 6.62, pay: {3: 8.8, 4: 33, 5: 132} },
-            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 8.66, pay: {3: 5.5, 4: 22, 5: 88} },
-            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', ceki: 8.66, pay: {3: 5.5, 4: 22, 5: 88} },
-            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', ceki: 11.01, pay: {3: 3.3, 4: 13.2, 5: 55} },
+            'WILD':       { img: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b2d346b9-afd7-4aa8-8ad6-cc09722e46af/dkl2924-510e28b0-46b4-4e2d-a7e2-573e7c178507.png/v1/fill/w_894,h_894/bandarbola855_wild_auto_turun_setiap_putaran_by_bandarbola855link_dkl2924-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi9iMmQzNDZiOS1hZmQ3LTRhYTgtOGFkNi1jYzA5NzIyZTQ2YWYvZGtsMjkyNC01MTBlMjhiMC00NmI0LTRlMmQtYTdlMi01NzNlN2MxNzg1MDcucG5nIiwid2lkdGgiOiI8PTEwODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.NyviqQIqEqh76EXzCZNKnDgXyVB9vEn33dfieQFXvJ0', ceki: 2.47, pay: {3: 25.025, 4: 120.12, 5: 500.5} },
+            'LUCKY_7':    { img: 'https://www.slots-777.com/wp-content/uploads/2020/12/best-online-slot-symbol.png', ceki: 4.15, pay: {3: 15.015, 4: 60.06, 5: 250.25} },
+            'GRAPES':     { img: 'https://img.rankedboost.com/wp-content/plugins/Palworld/assets/items/Grape.webp', ceki: 6.42, pay: {3: 8.008, 4: 30.03, 5: 120.12} },
+            'PLUM':       { img: 'https://pragmaticplay.co/wp-content/uploads/2023/01/Plum-1024x792.png', ceki: 8.40, pay: {3: 5.005, 4: 20.02, 5: 80.08} },
+            'LEMON':      { img: 'https://pragmaticplay.co/wp-content/uploads/2023/04/pic09_lemon.png', ceki: 8.40, pay: {3: 5.005, 4: 20.02, 5: 80.08} },
+            'CHERRY':     { img: 'https://www.clipartmax.com/png/full/125-1258400_slot-machine-icons.png', ceki: 10.68, pay: {3: 3.003, 4: 12.012, 5: 50.05} },
         };
 
         const CARX_SAYI = 5;
@@ -515,7 +515,6 @@
             });
         }
 
-        // Real-time server sinxronizasiyası (Hər 2 saniyədən bir brauzeri yeniləmədən balansı yoxlayır)
         setInterval(async () => {
             if (!playerId || isSpinning) return;
             try {
