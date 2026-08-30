@@ -39,6 +39,13 @@ def load_players():
             with open(DB_FILE, "r", encoding="utf-8") as f:
                 loaded = json.load(f)
                 if isinstance(loaded, dict):
+                    # Köhnə hesablarda çatışmayan açarları (total_deposit və balance) yoxlayıb avtomatik əlavə edirik
+                    for pid, pdata in loaded.items():
+                        if isinstance(pdata, dict):
+                            if 'total_deposit' not in pdata:
+                                pdata['total_deposit'] = 0.00
+                            if 'balance' not in pdata:
+                                pdata['balance'] = 0.00
                     default_players = loaded
         except Exception:
             pass
@@ -123,7 +130,12 @@ def add_balance():
             players_db[player_id]['balance'] += val
             players_db[player_id]['total_deposit'] += val
             save_players()
-            return jsonify({"success": True, "message": "Uğurla əlavə edildi!", "balance": players_db[player_id]['balance'], "total_deposit": players_db[player_id]['total_deposit']})
+            return jsonify({
+                "success": True, 
+                "message": "Uğurla əlavə edildi!", 
+                "balance": players_db[player_id]['balance'], 
+                "total_deposit": players_db[player_id]['total_deposit']
+            })
         except (ValueError, TypeError):
             return jsonify({"success": False, "message": "Yanlış məbləğ!"}), 400
             
@@ -223,7 +235,7 @@ def withdraw():
         
     player = players_db[player_id]
     total_deposit = player.get('total_deposit', 0.00)
-    max_allowed_withdraw = total_deposit * 2.50 # 10 manat yatırıbsa 150% artırıb 25 manat edə bilər
+    max_allowed_withdraw = total_deposit * 2.50 # Yatırımın +150% artırılmış həddi
     
     if amount > max_allowed_withdraw:
         return jsonify({"status": "error", "message": f"Bu qədər çıxara bilərsiniz: {max_allowed_withdraw:.2f} ₼ (Yatırımın +150% həddi)"})
